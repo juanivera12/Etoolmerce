@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useEditorStore } from '../store/useEditorStore';
+import { useEditorStore } from '../../store/useEditorStore';
 import { X, ChevronRight, ChevronLeft } from 'lucide-react';
 
 export const TutorialOverlay = () => {

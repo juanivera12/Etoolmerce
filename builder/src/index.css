@@ -7,6 +7,9 @@ body,
 #root {
   height: 100%;
   margin: 0;
+  background-color: #EDEEF0;
+  background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+  background-size: 24px 24px;
 }
 
 /* Animations */
