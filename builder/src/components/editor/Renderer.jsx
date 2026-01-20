@@ -37,7 +37,7 @@ const ElementWrapper = ({ node, children }) => {
     };
 
     const handleDragStart = (e) => {
-        if (isPreviewMode) {
+        if (isPreviewMode || node.type === 'background') {
             e.preventDefault();
             return;
         }
@@ -630,6 +630,14 @@ export const Renderer = ({ node }) => {
                 <form onSubmit={(e) => e.preventDefault()} style={{ width: '100%', height: '100%' }}>
                     {renderChildren()}
                 </form>
+            </ElementWrapper>
+        );
+    }
+
+    if (node.type === 'background') {
+        return (
+            <ElementWrapper node={node}>
+                <div style={{ width: '100%', height: '100%' }} />
             </ElementWrapper>
         );
     }

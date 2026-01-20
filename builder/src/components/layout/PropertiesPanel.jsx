@@ -52,12 +52,12 @@ const PropertyHelp = ({ title, description }) => {
     );
 };
 
-const SliderControl = ({ label, value, onChange, min = 0, max = 100, step = 1, helpTitle, helpDesc }) => {
+const SliderControl = ({ label, value, onChange, min = 0, max = 100, step = 1, helpTitle, helpDesc, unit = 'px' }) => {
     // Extract numeric value safely
     const numericValue = parseInt(value, 10) || 0;
 
     const handleChange = (e) => {
-        onChange(`${e.target.value}px`);
+        onChange(`${e.target.value}${unit}`);
     };
 
     return (
@@ -162,9 +162,9 @@ export const PropertiesPanel = () => {
                     <div className="space-y-3 pb-4 border-b border-slate-100">
                         <div className="flex items-center">
                             <label className="text-xs font-semibold text-slate-700 flex items-center gap-2">
-                                <Link size={14} /> {isReact ? 'Navegación / Eventos' : 'Enlaces / Href'}
+                                <Link size={14} /> Configuración de Enlace
                             </label>
-                            <PropertyHelp title="Interacción" description={isReact ? "Define props de navegación (Link to) o eventos onClick." : "Define el atributo href o eventos onclick."} />
+                            <PropertyHelp title="Interacción" description="Define el destino del clic (Página interna o URL externa)." />
                         </div>
                         <div>
                             <span className="text-[10px] text-slate-400 mb-1 block">Acción</span>
@@ -245,11 +245,129 @@ export const PropertiesPanel = () => {
                     </div>
                 </div>
 
-                {/* Content Editing (Text/Image/Video) */}
-                {(selectedNode.type === 'text' || selectedNode.type === 'image' || selectedNode.type === 'video') && (
+                {/* Background Component Specific Controls */}
+                {selectedNode.type === 'background' && (
+                    <div className="space-y-4">
+                        <label className="text-xs font-semibold text-slate-700">Propiedades de Fondo</label>
+
+                        {/* Type Selector */}
+                        <div className="flex bg-slate-100 p-1 rounded-lg">
+                            <button
+                                onClick={() => {
+                                    updateProperty(selectedId, 'backgroundConfig', { ...selectedNode.backgroundConfig, type: 'solid' });
+                                    updateStyles(selectedId, { backgroundImage: 'none', backgroundColor: selectedNode.styles.backgroundColor || '#cbd5e1' });
+                                }}
+                                className={clsx("flex-1 text-xs py-1.5 rounded-md transition-all font-medium", (!selectedNode.backgroundConfig?.type || selectedNode.backgroundConfig?.type === 'solid') ? "bg-white shadow-sm text-indigo-600" : "text-slate-500 hover:text-slate-700")}
+                            >
+                                Sólido
+                            </button>
+                            <button
+                                onClick={() => {
+                                    const newConfig = {
+                                        type: 'gradient',
+                                        direction: 135,
+                                        startColor: selectedNode.styles.backgroundColor || '#6366f1',
+                                        endColor: '#a855f7'
+                                    };
+                                    updateProperty(selectedId, 'backgroundConfig', { ...selectedNode.backgroundConfig, ...newConfig });
+                                    updateStyles(selectedId, { backgroundImage: `linear-gradient(${newConfig.direction}deg, ${newConfig.startColor}, ${newConfig.endColor})` });
+                                }}
+                                className={clsx("flex-1 text-xs py-1.5 rounded-md transition-all font-medium", selectedNode.backgroundConfig?.type === 'gradient' ? "bg-white shadow-sm text-indigo-600" : "text-slate-500 hover:text-slate-700")}
+                            >
+                                Gradiente
+                            </button>
+                        </div>
+
+                        {/* Solid Mode */}
+                        {(!selectedNode.backgroundConfig?.type || selectedNode.backgroundConfig?.type === 'solid') && (
+                            <div>
+                                <label className="text-[10px] text-slate-500 font-bold block mb-1">Color Sólido</label>
+                                <div className="flex gap-2">
+                                    <div
+                                        className="w-10 h-10 rounded border border-slate-200 cursor-pointer shadow-sm relative overflow-hidden"
+                                        style={{ backgroundColor: selectedNode.styles.backgroundColor || 'transparent' }}
+                                    >
+                                        <input
+                                            type="color"
+                                            value={selectedNode.styles.backgroundColor || '#cbd5e1'}
+                                            onChange={(e) => updateStyles(selectedId, { backgroundColor: e.target.value })}
+                                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                        />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={selectedNode.styles.backgroundColor || ''}
+                                        placeholder="#cbd5e1"
+                                        onChange={(e) => updateStyles(selectedId, { backgroundColor: e.target.value })}
+                                        className="flex-1 p-2 text-xs border border-slate-200 rounded"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Gradient Mode */}
+                        {selectedNode.backgroundConfig?.type === 'gradient' && (
+                            <div className="space-y-4 animate-in fade-in slide-in-from-top-1">
+                                <SliderControl
+                                    label={`Ángulo: ${selectedNode.backgroundConfig?.direction || 135}°`}
+                                    value={selectedNode.backgroundConfig?.direction || 135}
+                                    onChange={(val) => {
+                                        const config = { ...selectedNode.backgroundConfig, direction: val };
+                                        updateProperty(selectedId, 'backgroundConfig', config);
+                                        updateStyles(selectedId, { backgroundImage: `linear-gradient(${val}deg, ${config.startColor}, ${config.endColor})` });
+                                    }}
+                                    max={360}
+                                    step={5}
+                                    unit=""
+                                />
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <span className="text-[10px] text-slate-400 mb-1 block">Inicio</span>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 rounded border border-slate-200 relative overflow-hidden" style={{ backgroundImage: `linear-gradient(to bottom right, ${selectedNode.backgroundConfig?.startColor}, transparent)` }}>
+                                                <input
+                                                    type="color"
+                                                    className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                                                    value={selectedNode.backgroundConfig?.startColor || '#ffffff'}
+                                                    onChange={(e) => {
+                                                        const config = { ...selectedNode.backgroundConfig, startColor: e.target.value };
+                                                        updateProperty(selectedId, 'backgroundConfig', config);
+                                                        updateStyles(selectedId, { backgroundImage: `linear-gradient(${config.direction}deg, ${e.target.value}, ${config.endColor})` });
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span className="text-[10px] text-slate-400 mb-1 block">Fin</span>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 rounded border border-slate-200 relative overflow-hidden" style={{ backgroundImage: `linear-gradient(to bottom right, transparent, ${selectedNode.backgroundConfig?.endColor})` }}>
+                                                <input
+                                                    type="color"
+                                                    className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                                                    value={selectedNode.backgroundConfig?.endColor || '#000000'}
+                                                    onChange={(e) => {
+                                                        const config = { ...selectedNode.backgroundConfig, endColor: e.target.value };
+                                                        updateProperty(selectedId, 'backgroundConfig', config);
+                                                        updateStyles(selectedId, { backgroundImage: `linear-gradient(${config.direction}deg, ${config.startColor}, ${e.target.value})` });
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+
+                {/* Content Editing (Text/Image/Video/Button/Link) */}
+                {(selectedNode.type === 'text' || selectedNode.type === 'image' || selectedNode.type === 'video' || selectedNode.type === 'button' || selectedNode.type === 'link') && (
                     <div className="space-y-3">
-                        <label className="text-xs font-semibold text-slate-700">Contenido</label>
-                        {selectedNode.type === 'text' ? (
+                        <label className="text-xs font-semibold text-slate-700">Contenido / Texto</label>
+                        {(selectedNode.type === 'text' || selectedNode.type === 'button' || selectedNode.type === 'link') ? (
                             <textarea
                                 value={selectedNode.content}
                                 onChange={(e) => updateContent(selectedId, e.target.value)}

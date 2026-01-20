@@ -20,6 +20,8 @@ export const Resizer = ({ targetRef, id, isSelected }) => {
     };
 
     const node = findNode(pageData, id);
+    if (node?.type === 'background') return null;
+
     // Logic: Free resizing (all directions) is only truly standard for absolute/fixed. 
     // For static/relative (flow), width/height work, but top/left might not apply unless relative.
     // However, users expect resizing to "work". We will modify width/height.

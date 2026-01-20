@@ -56,7 +56,38 @@ const createPage = (name, isHome = false) => ({
                     }
                 ]
             }
-        ] : []
+        ] : [
+            {
+                id: `section-${Date.now()}`,
+                type: "section",
+                styles: {
+                    padding: "60px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "#ffffff",
+                    border: "1px dashed #e2e8f0",
+                    gap: "16px",
+                    minHeight: "300px",
+                    position: "relative"
+                },
+                children: [
+                    {
+                        id: `title-${Date.now()}`,
+                        type: "text",
+                        content: name,
+                        styles: { fontSize: "32px", fontWeight: "700", color: "#334155" }
+                    },
+                    {
+                        id: `subtitle-${Date.now()}`,
+                        type: "text",
+                        content: "Página vacía. Arrastra elementos desde la izquierda.",
+                        styles: { fontSize: "16px", color: "#94a3b8" }
+                    }
+                ]
+            }
+        ]
     }
 });
 
@@ -71,23 +102,20 @@ const createNode = (type, customStyles = {}) => {
     switch (type) {
         case 'section':
         case 'container':
-        case 'header':
-        case 'footer':
             return {
                 id,
                 type,
                 styles: {
-                    padding: type === 'header' ? "16px 32px" : type === 'footer' ? "48px 20px" : "20px",
-                    minHeight: type === 'header' ? "auto" : "100px",
+                    padding: "20px",
+                    minHeight: "100px",
                     width: "100%",
-                    // Default Header/Footer styles
-                    backgroundColor: type === 'footer' ? "#1e293b" : "#ffffff",
-                    color: type === 'footer' ? "#ffffff" : "inherit",
+                    backgroundColor: "transparent",
+                    color: "inherit",
                     display: "flex",
-                    flexDirection: type === 'header' ? "row" : "column",
-                    justifyContent: type === 'header' ? "space-between" : "flex-start",
-                    alignItems: type === 'header' ? "center" : "stretch",
-                    borderBottom: type === 'header' ? "1px solid #e2e8f0" : "none",
+                    flexDirection: "column",
+                    justifyContent: "flex-start",
+                    alignItems: "stretch",
+                    border: "none",
                     gap: "10px",
                     position: "relative",
                     ...customStyles
@@ -95,6 +123,7 @@ const createNode = (type, customStyles = {}) => {
                 layoutMode: 'stack',
                 children: []
             };
+
         case 'text': {
             const { styles: passedStyles = {}, ...restProps } = customStyles;
             return {
@@ -111,6 +140,23 @@ const createNode = (type, customStyles = {}) => {
                 }
             };
         }
+        case 'background':
+            return {
+                id,
+                type,
+                styles: {
+                    position: "absolute",
+                    top: "0",
+                    left: "0",
+                    width: "100%",
+                    minHeight: "100vh",
+                    backgroundColor: "#cbd5e1",
+                    zIndex: "0",
+                    ...customStyles
+                },
+                children: []
+            };
+
         case 'image': {
             const { styles: passedStyles = {}, ...restProps } = customStyles;
             return {
@@ -374,23 +420,87 @@ const createNode = (type, customStyles = {}) => {
             return {
                 id, type,
                 styles: {
-                    display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer',
-                    padding: '10px 20px', border: '1px solid #e2e8f0', borderRadius: '12px',
-                    backgroundColor: 'white', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                    transition: 'all 0.2s ease'
+                    position: 'relative', display: 'flex', alignItems: 'center', zIndex: '40'
                 },
                 children: [
+                    // Trigger Button
                     {
-                        id: `${id}-icon`, type: 'icon',
-                        content: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>`,
-                        styles: { color: '#0f172a' }
-                    },
-                    {
-                        id: `${id}-info`, type: 'container',
-                        styles: { display: 'flex', flexDirection: 'column', gap: '0' },
+                        id: `${id}-btn`, type: 'container',
+                        styles: {
+                            display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer',
+                            padding: '10px 20px', border: '1px solid #e2e8f0', borderRadius: '12px',
+                            backgroundColor: 'white', boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                            transition: 'all 0.2s ease'
+                        },
                         children: [
-                            { id: `${id}-count`, type: 'text', content: '2 Items', styles: { fontSize: '10px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase' } },
-                            { id: `${id}-total`, type: 'text', content: '$120.00', styles: { fontSize: '14px', fontWeight: 'bold', color: '#0f172a' } }
+                            {
+                                id: `${id}-icon`, type: 'icon',
+                                content: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>`,
+                                styles: { color: '#0f172a' }
+                            },
+                            {
+                                id: `${id}-info`, type: 'container',
+                                styles: { display: 'flex', flexDirection: 'column', gap: '0', padding: 0, border: 'none', background: 'transparent' },
+                                children: [
+                                    { id: `${id}-count`, type: 'text', content: '2 Items', styles: { fontSize: '10px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase' } },
+                                    { id: `${id}-total`, type: 'text', content: '$120.00', styles: { fontSize: '14px', fontWeight: 'bold', color: '#0f172a' } }
+                                ]
+                            }
+                        ]
+                    },
+                    // Dropdown (Hidden)
+                    {
+                        id: `${id}-dropdown`, type: 'container',
+                        styles: {
+                            position: 'absolute', top: '120%', right: '0', width: '320px',
+                            backgroundColor: 'white', borderRadius: '16px',
+                            boxShadow: '0 10px 40px -10px rgba(0,0,0,0.1)',
+                            border: '1px solid #e2e8f0', padding: '20px',
+                            display: 'none', flexDirection: 'column', gap: '16px', zIndex: '50'
+                        },
+                        children: [
+                            { id: `${id}-d-title`, type: 'text', content: 'Tu Carrito', styles: { fontSize: '16px', fontWeight: 'bold', color: '#0f172a', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' } },
+                            // Mock Item 1
+                            {
+                                id: `${id}-it1`, type: 'container',
+                                styles: { display: 'flex', gap: '12px', alignItems: 'center', padding: 0, border: 'none', background: 'transparent' },
+                                children: [
+                                    { id: `${id}-img1`, type: 'image', content: 'https://via.placeholder.com/60', styles: { width: '50px', height: '50px', borderRadius: '8px', objectFit: 'cover' } },
+                                    {
+                                        id: `${id}-inf1`, type: 'container',
+                                        styles: { display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, padding: 0, border: 'none', background: 'transparent' },
+                                        children: [
+                                            { id: `${id}-nm1`, type: 'text', content: 'Camiseta Básica', styles: { fontSize: '14px', fontWeight: '500', color: '#334155' } },
+                                            { id: `${id}-pr1`, type: 'text', content: '$20.00 x 1', styles: { fontSize: '12px', color: '#64748b' } }
+                                        ]
+                                    }
+                                ]
+                            },
+                            // Mock Item 2
+                            {
+                                id: `${id}-it2`, type: 'container',
+                                styles: { display: 'flex', gap: '12px', alignItems: 'center', padding: 0, border: 'none', background: 'transparent' },
+                                children: [
+                                    { id: `${id}-img2`, type: 'image', content: 'https://via.placeholder.com/60', styles: { width: '50px', height: '50px', borderRadius: '8px', objectFit: 'cover' } },
+                                    {
+                                        id: `${id}-inf2`, type: 'container',
+                                        styles: { display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, padding: 0, border: 'none', background: 'transparent' },
+                                        children: [
+                                            { id: `${id}-nm2`, type: 'text', content: 'Pantalón Vaquero', styles: { fontSize: '14px', fontWeight: '500', color: '#334155' } },
+                                            { id: `${id}-pr2`, type: 'text', content: '$80.00 x 1', styles: { fontSize: '12px', color: '#64748b' } }
+                                        ]
+                                    }
+                                ]
+                            },
+                            { id: `${id}-div`, type: 'divider', styles: { margin: '8px 0' } },
+                            {
+                                id: `${id}-actions`, type: 'container',
+                                styles: { display: 'flex', flexDirection: 'column', gap: '8px', padding: 0, border: 'none', background: 'transparent' },
+                                children: [
+                                    { id: `${id}-checkout`, type: 'button', content: 'Pagar Ahora ($120.00)', styles: { width: '100%', padding: '12px', backgroundColor: '#0f172a', color: 'white', borderRadius: '8px', fontWeight: '600' } },
+                                    { id: `${id}-view`, type: 'text', content: 'Ver Carrito Completo', styles: { width: '100%', textAlign: 'center', fontSize: '13px', color: '#64748b', cursor: 'pointer', textDecoration: 'underline' } }
+                                ]
+                            }
                         ]
                     }
                 ]
@@ -399,20 +509,58 @@ const createNode = (type, customStyles = {}) => {
             return {
                 id, type,
                 styles: {
-                    display: 'flex', alignItems: 'center', backgroundColor: 'white',
-                    borderRadius: '8px', padding: '12px 16px', width: '100%',
-                    maxWidth: '300px', border: '1px solid #e2e8f0',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                    position: 'relative', width: '100%', maxWidth: '300px', zIndex: '30'
                 },
                 children: [
                     {
-                        id: `${id}-input`, type: 'text', content: 'Buscar productos...',
-                        styles: { border: 'none', background: 'transparent', outline: 'none', fontSize: '14px', flex: 1, color: '#94a3b8' }
+                        id: `${id}-container`, type: 'container',
+                        styles: {
+                            display: 'flex', alignItems: 'center', backgroundColor: 'white',
+                            borderRadius: '8px', padding: '12px 16px', width: '100%',
+                            border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                        },
+                        children: [
+                            {
+                                id: `${id}-input`, type: 'input', content: '', placeholder: 'Buscar productos...',
+                                styles: { border: 'none', background: 'transparent', outline: 'none', fontSize: '14px', flex: 1, color: '#334155', width: '100%' }
+                            },
+                            {
+                                id: `${id}-icon`, type: 'icon',
+                                content: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`,
+                                styles: { color: '#cbd5e1', cursor: 'pointer' }
+                            }
+                        ]
                     },
+                    // Search Results Dropdown (Hidden)
                     {
-                        id: `${id}-icon`, type: 'icon',
-                        content: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`,
-                        styles: { color: '#cbd5e1' }
+                        id: `${id}-results`, type: 'container',
+                        styles: {
+                            position: 'absolute', top: '110%', left: '0', width: '100%',
+                            backgroundColor: 'white', borderRadius: '12px',
+                            boxShadow: '0 4px 20px -5px rgba(0,0,0,0.1)',
+                            border: '1px solid #e2e8f0', padding: '16px',
+                            display: 'none', flexDirection: 'column', gap: '12px', zIndex: '50'
+                        },
+                        children: [
+                            { id: `${id}-r-title`, type: 'text', content: 'Sugerencias', styles: { fontSize: '12px', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase' } },
+                            {
+                                id: `${id}-r1`, type: 'container',
+                                styles: { display: 'flex', alignItems: 'center', gap: '10px', padding: '8px', borderRadius: '8px', cursor: 'pointer', transition: 'background 0.2s', ':hover': { backgroundColor: '#f1f5f9' } },
+                                children: [
+                                    { id: `${id}-img1`, type: 'image', content: 'https://via.placeholder.com/40', styles: { width: '32px', height: '32px', borderRadius: '6px' } },
+                                    { id: `${id}-txt1`, type: 'text', content: 'Zapatillas Running', styles: { fontSize: '14px', color: '#334155' } }
+                                ]
+                            },
+                            {
+                                id: `${id}-r2`, type: 'container',
+                                styles: { display: 'flex', alignItems: 'center', gap: '10px', padding: '8px', borderRadius: '8px', cursor: 'pointer', transition: 'background 0.2s', ':hover': { backgroundColor: '#f1f5f9' } },
+                                children: [
+                                    { id: `${id}-img2`, type: 'image', content: 'https://via.placeholder.com/40', styles: { width: '32px', height: '32px', borderRadius: '6px' } },
+                                    { id: `${id}-txt2`, type: 'text', content: 'Camisa Oxford', styles: { fontSize: '14px', color: '#334155' } }
+                                ]
+                            },
+                            { id: `${id}-all`, type: 'text', content: 'Ver todos los resultados', styles: { fontSize: '13px', color: '#4f46e5', textAlign: 'center', cursor: 'pointer', marginTop: '4px' } }
+                        ]
                     }
                 ]
             };
@@ -625,9 +773,12 @@ const createNode = (type, customStyles = {}) => {
                     backgroundColor: "#ffffff",
                     borderBottom: "1px solid #e2e8f0",
                     boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
+                    position: 'relative',
+                    zIndex: '100',
                     ...customStyles
                 },
                 children: [
+                    // Brand Section
                     {
                         id: `${id}-brand`,
                         type: 'container',
@@ -636,7 +787,7 @@ const createNode = (type, customStyles = {}) => {
                             {
                                 id: `${id}-logo`,
                                 type: 'image',
-                                content: "", // Placeholder
+                                content: "", // Placeholder for Logo
                                 styles: { width: "40px", height: "40px", objectFit: "contain" }
                             },
                             {
@@ -647,15 +798,38 @@ const createNode = (type, customStyles = {}) => {
                             }
                         ]
                     },
+                    // Desktop Nav (3 Buttons/Links: Inicio, Productos, Sobre Nosotros)
                     {
                         id: `${id}-nav`,
                         type: 'container',
-                        styles: { display: "flex", gap: "32px", padding: '0', border: 'none', backgroundColor: 'transparent', alignItems: 'center' },
+                        styles: { display: "flex", gap: "32px", padding: '0', border: 'none', backgroundColor: 'transparent', alignItems: 'center', '@media (max-width: 768px)': { display: 'none' } },
                         children: [
                             { id: `${id}-l1`, type: 'text', content: "Inicio", styles: { fontSize: "15px", fontWeight: "500", color: "#64748b", cursor: 'pointer', transition: 'color 0.2s', ':hover': { color: '#4f46e5' } } },
                             { id: `${id}-l2`, type: 'text', content: "Productos", styles: { fontSize: "15px", fontWeight: "500", color: "#64748b", cursor: 'pointer', transition: 'color 0.2s', ':hover': { color: '#4f46e5' } } },
-                            { id: `${id}-l3`, type: 'text', content: "Ofertas", styles: { fontSize: "15px", fontWeight: "500", color: "#64748b", cursor: 'pointer', transition: 'color 0.2s', ':hover': { color: '#4f46e5' } } },
-                            { id: `${id}-l4`, type: 'text', content: "Contacto", styles: { fontSize: "15px", fontWeight: "500", color: "#64748b", cursor: 'pointer', transition: 'color 0.2s', ':hover': { color: '#4f46e5' } } }
+                            { id: `${id}-l3`, type: 'text', content: "Sobre Nosotros", styles: { fontSize: "15px", fontWeight: "500", color: "#64748b", cursor: 'pointer', transition: 'color 0.2s', ':hover': { color: '#4f46e5' } } }
+                        ]
+                    },
+                    // Hamburger (Mobile Trigger)
+                    {
+                        id: `${id}-bgr`,
+                        type: 'icon',
+                        content: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`,
+                        styles: { cursor: 'pointer', display: 'none', '@media (max-width: 768px)': { display: 'block' }, color: '#1e293b' }
+                    },
+                    // Mobile Menu Overlay
+                    {
+                        id: `${id}-mob`,
+                        type: 'container',
+                        styles: {
+                            position: 'absolute', top: '100%', left: 0, width: '100%',
+                            backgroundColor: 'white', borderBottom: '1px solid #e2e8f0',
+                            padding: '20px', display: 'none', flexDirection: 'column', gap: '16px',
+                            boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)'
+                        },
+                        children: [
+                            { id: `${id}-m1`, type: 'text', content: "Inicio", styles: { fontSize: "16px", fontWeight: "500", color: "#334155", padding: '8px' } },
+                            { id: `${id}-m2`, type: 'text', content: "Productos", styles: { fontSize: "16px", fontWeight: "500", color: "#334155", padding: '8px' } },
+                            { id: `${id}-m3`, type: 'text', content: "Sobre Nosotros", styles: { fontSize: "16px", fontWeight: "500", color: "#334155", padding: '8px' } }
                         ]
                     }
                 ]
@@ -833,10 +1007,10 @@ const createNode = (type, customStyles = {}) => {
                                 styles: { fontSize: "18px", fontWeight: "700", color: "#1e293b" }
                             },
                             {
-                                id: `${id}-fdesc`,
-                                type: 'text',
-                                content: "La mejor experiencia de compra online.",
-                                styles: { fontSize: "14px", color: "#64748b", textAlign: "center" }
+                                id: `${id}-logo`,
+                                type: 'image',
+                                content: "",
+                                styles: { width: "40px", height: "40px", objectFit: "contain", opacity: "0.8" }
                             }
                         ]
                     },
@@ -846,30 +1020,21 @@ const createNode = (type, customStyles = {}) => {
                         styles: { display: "flex", gap: "24px", padding: '0', border: 'none', backgroundColor: 'transparent', flexWrap: "wrap", justifyContent: "center" },
                         children: [
                             { id: `${id}-fl1`, type: 'text', content: "Inicio", styles: { fontSize: "14px", color: "#475569", cursor: 'pointer' } },
-                            { id: `${id}-fl2`, type: 'text', content: "Catálogo", styles: { fontSize: "14px", color: "#475569", cursor: 'pointer' } },
-                            { id: `${id}-fl3`, type: 'text', content: "Soporte", styles: { fontSize: "14px", color: "#475569", cursor: 'pointer' } }
+                            { id: `${id}-fl2`, type: 'text', content: "Productos", styles: { fontSize: "14px", color: "#475569", cursor: 'pointer' } },
+                            { id: `${id}-fl3`, type: 'text', content: "Sobre Nosotros", styles: { fontSize: "14px", color: "#475569", cursor: 'pointer' } }
                         ]
                     },
                     { id: `${id}-sep`, type: 'divider', styles: { width: '80%', margin: '0', opacity: 0.5 } },
                     {
                         id: `${id}-legal`,
                         type: 'container',
-                        styles: { display: "flex", gap: "24px", padding: '0', border: 'none', backgroundColor: 'transparent', flexDirection: "column", alignItems: "center" },
+                        styles: { display: 'flex', gap: '8px', padding: '0', border: 'none', backgroundColor: 'transparent', flexDirection: "column", alignItems: "center" },
                         children: [
                             {
                                 id: `${id}-copy`,
                                 type: 'text',
-                                content: "© 2024 Mi E-Commerce Inc. Todos los derechos reservados.",
+                                content: "© 2024 Mi E-Commerce. Todos los derechos reservados.",
                                 styles: { fontSize: "12px", color: "#94a3b8" }
-                            },
-                            {
-                                id: `${id}-terms`,
-                                type: 'container',
-                                styles: { display: "flex", gap: "16px", padding: '0', border: 'none', backgroundColor: 'transparent' },
-                                children: [
-                                    { id: `${id}-t1`, type: 'text', content: "Privacidad", styles: { fontSize: "12px", color: "#94a3b8", textDecoration: "underline", cursor: "pointer" } },
-                                    { id: `${id}-t2`, type: 'text', content: "Términos", styles: { fontSize: "12px", color: "#94a3b8", textDecoration: "underline", cursor: "pointer" } }
-                                ]
                             }
                         ]
                     }
@@ -1026,13 +1191,19 @@ export const useEditorStore = create((set, get) => ({
         const activePage = state.pages.find(p => p.id === state.activePageId);
         if (!activePage) return state;
 
-        const updatedContent = updateNode(activePage.content, parentId, (node) => {
+        // Force Root Parent for Global Elements (Header, Footer, Background)
+        let targetId = parentId;
+        if (type === 'background' || type === 'header' || type === 'footer') {
+            targetId = activePage.content.id;
+        }
+
+        const updatedContent = updateNode(activePage.content, targetId, (node) => {
             const newNode = createNode(type, customStyles);
             let newChildren = [...(node.children || [])];
 
-            if (type === 'header') {
+            if (type === 'header' || type === 'background') {
                 // Remove existing header if exists (optional, or just prepend)
-                // Enforce Top
+                // Enforce Top (Background at start = behind everything)
                 newChildren.unshift(newNode);
             } else if (type === 'footer') {
                 // Enforce Bottom

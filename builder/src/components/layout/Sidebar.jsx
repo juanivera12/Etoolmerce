@@ -70,6 +70,21 @@ export const Sidebar = () => {
         }, 2000);
     };
 
+    const handleAddPage = () => {
+        if (newPageName.trim()) {
+            addPage(newPageName);
+            setNewPageName('');
+            setIsAdding(false);
+        }
+    };
+
+    const handleRename = (id) => {
+        if (editName.trim()) {
+            renamePage(id, editName);
+        }
+        setEditingId(null);
+    };
+
     return (
         <>
             <div className="flex flex-col h-full bg-surface" id="sidebar-panel">
@@ -244,9 +259,8 @@ export const Sidebar = () => {
                         </SidebarCategory>
 
                         <SidebarCategory title="Básicos" defaultOpen={true}>
+                            <DraggableItem type="background" icon={<Maximize />} label="Fondo" variant="blue" />
                             <DraggableItem type="text" icon={<Type />} label="Texto" variant="blue" />
-                            <DraggableItem type="title" icon={<Heading1 />} label="Título" variant="blue" />
-                            <DraggableItem type="image" icon={<Image />} label="Imagen" variant="blue" />
                             <DraggableItem type="video" icon={<Video />} label="Video" variant="blue" />
                             <DraggableItem type="button" icon={<RectangleHorizontal />} label="Botón" variant="blue" />
                             <DraggableItem type="divider" icon={<Minus />} label="Divisor" variant="blue" />
