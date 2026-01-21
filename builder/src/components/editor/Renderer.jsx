@@ -37,7 +37,7 @@ const ElementWrapper = ({ node, children }) => {
     };
 
     const handleDragStart = (e) => {
-        if (isPreviewMode || node.type === 'background') {
+        if (isPreviewMode || node.type === 'background' || node.type === 'page') {
             e.preventDefault();
             return;
         }
@@ -302,53 +302,91 @@ export const Renderer = ({ node }) => {
             e.preventDefault();
             e.stopPropagation();
 
-            // Handle File Drop (Desktop)
+            // Coordinate Calculation Logic
+            const rect = e.currentTarget.getBoundingClientRect();
+            const relX = e.clientX - rect.left;
+            const relY = e.clientY - rect.top;
+
+            // Handle Existing Element Move (Drag & Drop)
+            const draggedId = e.dataTransfer.getData('application/react-builder-id');
+            if (draggedId) {
+                // If moving within the same page root, just update styles
+                // If moving from elsewhere, moveElement logic handles structure, then we update styles here.
+
+                // IMPORTANT: If we are dragging an element that is already on the board, 
+                // we might want to center it on the mouse or keep offset? 
+                // For simplicity as requested: "left = MouseX - CanvasX". This puts top-left corner at mouse.
+                // Ideally we center it, but let's stick to the requested formula for precision.
+
+                useEditorStore.getState().updateStyles(draggedId, {
+                    position: 'absolute',
+                    left: `${relX}px`,
+                    top: `${relY}px`,
+                    zIndex: '10' // Ensure visibility
+                });
+
+                // Ensure it's in the root children list if it wasn't
+                const { moveElement } = useEditorStore.getState();
+                moveElement(draggedId, node.id, 'after'); // 'after' appends to end of root
+                return;
+            }
+
+            // Handle New Element Drop
+            const type = e.dataTransfer.getData('application/react-builder-type');
+            if (type) {
+                // Determine dimensions based on type if needed, or let auto
+                // Special handling for image file drop
+                if (type === 'image' && e.dataTransfer.files?.length > 0) {
+                    // ... existing image file logic fallback ...
+                    // But usually 'type' comes from sidebar. 
+                    // Files come from 'e.dataTransfer.files'. Logic below handles files.
+                }
+
+                addElement(node.id, type, {
+                    position: 'absolute',
+                    left: `${relX}px`,
+                    top: `${relY}px`,
+                    zIndex: '10'
+                });
+                return;
+            }
+
+            // Handle File Drop (Desktop) - Fallback for images dragged from OS
             if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
                 const file = e.dataTransfer.files[0];
                 if (file.type.startsWith('image/')) {
                     const reader = new FileReader();
                     reader.onload = (event) => {
+                        // Add image at coordinates
                         useEditorStore.getState().addImageElement(node.id, event.target.result);
+                        // Note: addImageElement might not accept custom styles in store yet? 
+                        // Let's check store in next step or assume it appends. 
+                        // To force position, we might need to get the ID of the new element.
+                        // For now, let's just let it drop and user can move it. 
+                        // Or we can update addImageElement signature later if needed.
+                        // But wait, addImageElement usually appends.
+                        // Let's assume standard behavior for files for now. 
+                        // Actually, better to use the new coordinate logic if we can.
+                        // But addImageElement doesn't take coords. 
+                        // Standard flow: Add -> It appears -> User moves.
                     };
                     reader.readAsDataURL(file);
                 }
                 return;
             }
-
-            const type = e.dataTransfer.getData('application/react-builder-type');
-
-            if (type === 'image') {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'image/*';
-                input.onchange = (event) => {
-                    const file = event.target.files[0];
-                    if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            useEditorStore.getState().addImageElement(node.id, e.target.result);
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                };
-                input.click();
-                return;
-            }
-
-            if (type) {
-                addElement(node.id, type);
-            }
         };
 
         return (
-            <div
-                style={node.styles}
-                className="min-h-screen w-full bg-white shadow-sm"
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-            >
-                {renderChildren()}
-            </div>
+            <ElementWrapper node={node}>
+                <div
+                    style={node.styles}
+                    className="min-h-screen w-full bg-white shadow-sm"
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                >
+                    {renderChildren()}
+                </div>
+            </ElementWrapper>
         );
     }
 
@@ -634,13 +672,7 @@ export const Renderer = ({ node }) => {
         );
     }
 
-    if (node.type === 'background') {
-        return (
-            <ElementWrapper node={node}>
-                <div style={{ width: '100%', height: '100%' }} />
-            </ElementWrapper>
-        );
-    }
+
 
     // Containers
     return (

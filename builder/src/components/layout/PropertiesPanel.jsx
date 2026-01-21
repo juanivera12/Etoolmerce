@@ -1017,23 +1017,24 @@ export const PropertiesPanel = () => {
                         </span>
                     </div>
 
-                    {/* Position (Free Layout) */}
-                    <div>
-                        <span className="text-[10px] text-slate-400 mb-1 block">Posición</span>
-                        <select
-                            value={selectedNode.styles.position || 'static'}
-                            onChange={(e) => handleChangeStyle('position', e.target.value)}
-                            className="w-full p-2 text-sm border border-slate-200 rounded-lg bg-white"
-                        >
-                            <option value="static">Automático (Static)</option>
-                            <option value="relative">Relativo</option>
-                            <option value="absolute">Libre (Absolute)</option>
-                            <option value="fixed">Fijo (Fixed)</option>
-                        </select>
-                    </div>
-                    {/* ... (rest of position controls) */}
+                    {/* Position (Free Layout) - Hide for Page/Background */}
+                    {selectedNode.type !== 'background' && selectedNode.type !== 'page' && (
+                        <div>
+                            <span className="text-[10px] text-slate-400 mb-1 block">Posición</span>
+                            <select
+                                value={selectedNode.styles.position || 'static'}
+                                onChange={(e) => handleChangeStyle('position', e.target.value)}
+                                className="w-full p-2 text-sm border border-slate-200 rounded-lg bg-white"
+                            >
+                                <option value="static">Automático (Static)</option>
+                                <option value="relative">Relativo</option>
+                                <option value="absolute">Libre (Absolute)</option>
+                                <option value="fixed">Fijo (Fixed)</option>
+                            </select>
+                        </div>
+                    )}
 
-                    {(selectedNode.styles.position === 'absolute' || selectedNode.styles.position === 'fixed' || selectedNode.styles.position === 'relative') && (
+                    {(selectedNode.styles.position === 'absolute' || selectedNode.styles.position === 'fixed' || selectedNode.styles.position === 'relative') && selectedNode.type !== 'background' && selectedNode.type !== 'page' && (
                         <div className="space-y-4 pt-2 border-t border-slate-50 mt-2">
                             <div className="flex items-center">
                                 <label className="text-xs font-semibold text-slate-700">Coordenadas</label>
@@ -1088,186 +1089,192 @@ export const PropertiesPanel = () => {
                     )}
 
                     {/* Background & Gradient */}
-                    <div>
-                        <div className="flex justify-between items-center mb-2">
-                            <span className={clsx("text-[10px] block", isReact ? "font-mono text-slate-500" : "text-slate-400")}>
-                                {isReact ? 'background' : 'Fondo'}
-                            </span>
-                            <div className="flex bg-slate-100 rounded p-0.5">
-                                <button
-                                    className={`px-2 py-0.5 text-[10px] rounded ${!selectedNode.styles.backgroundImage ? 'bg-white shadow text-indigo-600' : 'text-slate-400'}`}
-                                    onClick={() => {
-                                        handleChangeStyle('backgroundImage', '');
-                                        handleChangeStyle('backgroundColor', '#ffffff');
-                                    }}
-                                >
-                                    Color
-                                </button>
-                                <button
-                                    className={`px-2 py-0.5 text-[10px] rounded ${selectedNode.styles.backgroundImage ? 'bg-white shadow text-indigo-600' : 'text-slate-400'}`}
-                                    onClick={() => handleChangeStyle('backgroundImage', 'linear-gradient(to bottom, #ffffff, #f1f5f9)')}
-                                >
-                                    Gradiente
-                                </button>
-                            </div>
-                        </div>
-
-                        {!selectedNode.styles.backgroundImage ? (
-                            <div className="flex items-center gap-2 border border-slate-200 rounded-lg p-1">
-                                <input
-                                    type="color"
-                                    value={selectedNode.styles.backgroundColor || '#ffffff'}
-                                    onChange={(e) => handleChangeStyle('backgroundColor', e.target.value)}
-                                    className="w-6 h-6 rounded cursor-pointer border-none p-0"
-                                />
-                                <input
-                                    type="text"
-                                    value={selectedNode.styles.backgroundColor || ''}
-                                    onChange={(e) => handleChangeStyle('backgroundColor', e.target.value)}
-                                    className="w-full text-xs outline-none bg-transparent"
-                                />
-                                {window.EyeDropper && (
+                    {selectedNode.type !== 'background' && (
+                        <div>
+                            <div className="flex justify-between items-center mb-2">
+                                <span className={clsx("text-[10px] block", isReact ? "font-mono text-slate-500" : "text-slate-400")}>
+                                    {isReact ? 'background' : 'Fondo'}
+                                </span>
+                                <div className="flex bg-slate-100 rounded p-0.5">
                                     <button
-                                        onClick={async () => {
-                                            try {
-                                                const eyeDropper = new window.EyeDropper();
-                                                const result = await eyeDropper.open();
-                                                handleChangeStyle('backgroundColor', result.sRGBHex);
-                                            } catch (e) { }
+                                        className={`px-2 py-0.5 text-[10px] rounded ${!selectedNode.styles.backgroundImage ? 'bg-white shadow text-indigo-600' : 'text-slate-400'}`}
+                                        onClick={() => {
+                                            handleChangeStyle('backgroundImage', '');
+                                            handleChangeStyle('backgroundColor', '#ffffff');
                                         }}
-                                        className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-600 transition-colors"
-                                        title="Gotero"
                                     >
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m2 22 1-1h3l9-9" /><path d="M3 21v-3l9-9" /><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.9.9" /><path d="m22 19-3 3-3-3" /></svg>
+                                        Color
                                     </button>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="space-y-2 p-2 bg-slate-50 rounded border border-slate-200">
-                                <div className="flex gap-2">
-                                    <select
-                                        className="text-[10px] p-1 border rounded w-1/2"
-                                        onChange={(e) => {
-                                            const isRadial = e.target.value === 'radial';
-                                            const current = selectedNode.styles.backgroundImage || '';
-                                            // Extract colors if possible or defaults
-                                            const colors = current.match(/#[0-9a-fA-F]{3,6}|rgba?\(.*?\)/g) || ['#ffffff', '#000000'];
-                                            const newGrad = isRadial
-                                                ? `radial-gradient(circle, ${colors[0] || '#ffffff'} 0%, ${colors[1] || '#000000'} 100%)`
-                                                : `linear-gradient(to bottom, ${colors[0] || '#ffffff'}, ${colors[1] || '#000000'})`;
-                                            handleChangeStyle('backgroundImage', newGrad);
-                                        }}
+                                    <button
+                                        className={`px-2 py-0.5 text-[10px] rounded ${selectedNode.styles.backgroundImage ? 'bg-white shadow text-indigo-600' : 'text-slate-400'}`}
+                                        onClick={() => handleChangeStyle('backgroundImage', 'linear-gradient(to bottom, #ffffff, #f1f5f9)')}
                                     >
-                                        <option value="linear">Lineal</option>
-                                        <option value="radial">Radial</option>
-                                    </select>
-                                    <button className="text-[10px] text-red-400 hover:text-red-500 underline" onClick={() => handleChangeStyle('backgroundImage', '')}>Quitar</button>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {/* Valid gradient editing is complex, simplification: 2 colors picker that rewrites the string */}
-                                    <div className="flex flex-col gap-1">
-                                        <span className="text-[9px] text-slate-400">Inicio (Centro/Top)</span>
-                                        <input
-                                            type="color"
-                                            className="w-full h-6 rounded cursor-pointer"
-                                            onChange={(e) => {
-                                                const current = selectedNode.styles.backgroundImage || '';
-                                                const isRadial = current.includes('radial');
-                                                const colors = current.match(/#[0-9a-fA-F]{3,6}|rgba?\(.*?\)/g) || ['#ffffff', '#000000'];
-                                                const newGrad = isRadial
-                                                    ? `radial-gradient(circle, ${e.target.value} 0%, ${colors[1] || '#000000'} 100%)`
-                                                    : `linear-gradient(to bottom, ${e.target.value}, ${colors[1] || '#000000'})`;
-                                                handleChangeStyle('backgroundColor', e.target.value); // Fallback
-                                                handleChangeStyle('backgroundImage', newGrad);
-                                            }}
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                        <span className="text-[9px] text-slate-400">Fin (Borde/Bottom)</span>
-                                        <input
-                                            type="color"
-                                            className="w-full h-6 rounded cursor-pointer"
-                                            onChange={(e) => {
-                                                const current = selectedNode.styles.backgroundImage || '';
-                                                const isRadial = current.includes('radial');
-                                                const colors = current.match(/#[0-9a-fA-F]{3,6}|rgba?\(.*?\)/g) || ['#ffffff', '#000000'];
-                                                const newGrad = isRadial
-                                                    ? `radial-gradient(circle, ${colors[0] || '#ffffff'} 0%, ${e.target.value} 100%)`
-                                                    : `linear-gradient(to bottom, ${colors[0] || '#ffffff'}, ${e.target.value})`;
-                                                handleChangeStyle('backgroundImage', newGrad);
-                                            }}
-                                        />
-                                    </div>
+                                        Gradiente
+                                    </button>
                                 </div>
                             </div>
-                        )}
-                    </div>
 
-                    <div className="space-y-4 pt-2 border-t border-slate-50">
-                        <div className="flex items-center">
-                            <label className="text-xs font-semibold text-slate-700">Espaciado</label>
-                            <PropertyHelp title="Modelo de Caja" description="Ajusta el espacio interno (Padding) y externo (Margin) usando los deslizadores." />
+                            {!selectedNode.styles.backgroundImage ? (
+                                <div className="flex items-center gap-2 border border-slate-200 rounded-lg p-1">
+                                    <input
+                                        type="color"
+                                        value={selectedNode.styles.backgroundColor || '#ffffff'}
+                                        onChange={(e) => handleChangeStyle('backgroundColor', e.target.value)}
+                                        className="w-6 h-6 rounded cursor-pointer border-none p-0"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={selectedNode.styles.backgroundColor || ''}
+                                        onChange={(e) => handleChangeStyle('backgroundColor', e.target.value)}
+                                        className="w-full text-xs outline-none bg-transparent"
+                                    />
+                                    {window.EyeDropper && (
+                                        <button
+                                            onClick={async () => {
+                                                try {
+                                                    const eyeDropper = new window.EyeDropper();
+                                                    const result = await eyeDropper.open();
+                                                    handleChangeStyle('backgroundColor', result.sRGBHex);
+                                                } catch (e) { }
+                                            }}
+                                            className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-600 transition-colors"
+                                            title="Gotero"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m2 22 1-1h3l9-9" /><path d="M3 21v-3l9-9" /><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.9.9" /><path d="m22 19-3 3-3-3" /></svg>
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="space-y-2 p-2 bg-slate-50 rounded border border-slate-200">
+                                    <div className="flex gap-2">
+                                        <select
+                                            className="text-[10px] p-1 border rounded w-1/2"
+                                            onChange={(e) => {
+                                                const isRadial = e.target.value === 'radial';
+                                                const current = selectedNode.styles.backgroundImage || '';
+                                                // Extract colors if possible or defaults
+                                                const colors = current.match(/#[0-9a-fA-F]{3,6}|rgba?\(.*?\)/g) || ['#ffffff', '#000000'];
+                                                const newGrad = isRadial
+                                                    ? `radial-gradient(circle, ${colors[0] || '#ffffff'} 0%, ${colors[1] || '#000000'} 100%)`
+                                                    : `linear-gradient(to bottom, ${colors[0] || '#ffffff'}, ${colors[1] || '#000000'})`;
+                                                handleChangeStyle('backgroundImage', newGrad);
+                                            }}
+                                        >
+                                            <option value="linear">Lineal</option>
+                                            <option value="radial">Radial</option>
+                                        </select>
+                                        <button className="text-[10px] text-red-400 hover:text-red-500 underline" onClick={() => handleChangeStyle('backgroundImage', '')}>Quitar</button>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {/* Valid gradient editing is complex, simplification: 2 colors picker that rewrites the string */}
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-[9px] text-slate-400">Inicio (Centro/Top)</span>
+                                            <input
+                                                type="color"
+                                                className="w-full h-6 rounded cursor-pointer"
+                                                onChange={(e) => {
+                                                    const current = selectedNode.styles.backgroundImage || '';
+                                                    const isRadial = current.includes('radial');
+                                                    const colors = current.match(/#[0-9a-fA-F]{3,6}|rgba?\(.*?\)/g) || ['#ffffff', '#000000'];
+                                                    const newGrad = isRadial
+                                                        ? `radial-gradient(circle, ${e.target.value} 0%, ${colors[1] || '#000000'} 100%)`
+                                                        : `linear-gradient(to bottom, ${e.target.value}, ${colors[1] || '#000000'})`;
+                                                    handleChangeStyle('backgroundColor', e.target.value); // Fallback
+                                                    handleChangeStyle('backgroundImage', newGrad);
+                                                }}
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-[9px] text-slate-400">Fin (Borde/Bottom)</span>
+                                            <input
+                                                type="color"
+                                                className="w-full h-6 rounded cursor-pointer"
+                                                onChange={(e) => {
+                                                    const current = selectedNode.styles.backgroundImage || '';
+                                                    const isRadial = current.includes('radial');
+                                                    const colors = current.match(/#[0-9a-fA-F]{3,6}|rgba?\(.*?\)/g) || ['#ffffff', '#000000'];
+                                                    const newGrad = isRadial
+                                                        ? `radial-gradient(circle, ${colors[0] || '#ffffff'} 0%, ${e.target.value} 100%)`
+                                                        : `linear-gradient(to bottom, ${colors[0] || '#ffffff'}, ${e.target.value})`;
+                                                    handleChangeStyle('backgroundImage', newGrad);
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
+                    )}
 
-                        <div className="bg-white rounded-lg border border-slate-100 p-3 shadow-sm">
-                            <SliderControl
-                                label={isReact ? 'margin' : 'Margen'}
-                                value={selectedNode.styles.margin}
-                                onChange={(val) => handleChangeStyle('margin', val)}
-                                max={100}
-                                helpTitle="Margen"
-                                helpDesc="Espacio exterior alrededor del elemento."
-                            />
+                    {selectedNode.type !== 'background' && selectedNode.type !== 'page' && (
+                        <div className="space-y-4 pt-2 border-t border-slate-50">
+                            <div className="flex items-center">
+                                <label className="text-xs font-semibold text-slate-700">Espaciado</label>
+                                <PropertyHelp title="Modelo de Caja" description="Ajusta el espacio interno (Padding) y externo (Margin) usando los deslizadores." />
+                            </div>
 
-                            <SliderControl
-                                label={isReact ? 'padding' : 'Padding'}
-                                value={selectedNode.styles.padding}
-                                onChange={(val) => handleChangeStyle('padding', val)}
-                                max={100}
-                                helpTitle="Padding"
-                                helpDesc="Espacio interior entre el borde y el contenido."
-                            />
-
-                            <div className="pt-2 mt-2 border-t border-slate-50">
+                            <div className="bg-white rounded-lg border border-slate-100 p-3 shadow-sm">
                                 <SliderControl
-                                    label={isReact ? 'gap' : 'Gap (Espacio Hijos)'}
-                                    value={selectedNode.styles.gap}
-                                    onChange={(val) => handleChangeStyle('gap', val)}
-                                    max={64}
-                                    helpTitle="Gap"
-                                    helpDesc="Espacio entre elementos hijos (solo Flex/Grid)."
+                                    label={isReact ? 'margin' : 'Margen'}
+                                    value={selectedNode.styles.margin}
+                                    onChange={(val) => handleChangeStyle('margin', val)}
+                                    max={100}
+                                    helpTitle="Margen"
+                                    helpDesc="Espacio exterior alrededor del elemento."
                                 />
+
+                                <SliderControl
+                                    label={isReact ? 'padding' : 'Padding'}
+                                    value={selectedNode.styles.padding}
+                                    onChange={(val) => handleChangeStyle('padding', val)}
+                                    max={100}
+                                    helpTitle="Padding"
+                                    helpDesc="Espacio interior entre el borde y el contenido."
+                                />
+
+                                <div className="pt-2 mt-2 border-t border-slate-50">
+                                    <SliderControl
+                                        label={isReact ? 'gap' : 'Gap (Espacio Hijos)'}
+                                        value={selectedNode.styles.gap}
+                                        onChange={(val) => handleChangeStyle('gap', val)}
+                                        max={64}
+                                        helpTitle="Gap"
+                                        helpDesc="Espacio entre elementos hijos (solo Flex/Grid)."
+                                    />
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Dimensions */}
-                    <div className="space-y-4 pt-2 border-t border-slate-50">
-                        <div className="flex items-center">
-                            <label className="text-xs font-semibold text-slate-700">Dimensiones</label>
-                            <PropertyHelp title="Tamaño" description="Define el ancho y alto en píxeles." />
+                    {selectedNode.type !== 'background' && selectedNode.type !== 'page' && (
+                        <div className="space-y-4 pt-2 border-t border-slate-50">
+                            <div className="flex items-center">
+                                <label className="text-xs font-semibold text-slate-700">Dimensiones</label>
+                                <PropertyHelp title="Tamaño" description="Define el ancho y alto en píxeles." />
+                            </div>
+                            <div className="bg-white rounded-lg border border-slate-100 p-3 shadow-sm">
+                                <SliderControl
+                                    label={isReact ? 'width' : 'Ancho'}
+                                    value={selectedNode.styles.width}
+                                    onChange={(val) => handleChangeStyle('width', val)}
+                                    max={1200}
+                                    step={10}
+                                    helpTitle="Ancho"
+                                    helpDesc="Ancho del elemento."
+                                />
+                                <SliderControl
+                                    label={isReact ? 'height' : 'Alto'}
+                                    value={selectedNode.styles.height}
+                                    onChange={(val) => handleChangeStyle('height', val)}
+                                    max={800}
+                                    step={10}
+                                    helpTitle="Alto"
+                                    helpDesc="Alto del elemento."
+                                />
+                            </div>
                         </div>
-                        <div className="bg-white rounded-lg border border-slate-100 p-3 shadow-sm">
-                            <SliderControl
-                                label={isReact ? 'width' : 'Ancho'}
-                                value={selectedNode.styles.width}
-                                onChange={(val) => handleChangeStyle('width', val)}
-                                max={1200}
-                                step={10}
-                                helpTitle="Ancho"
-                                helpDesc="Ancho del elemento."
-                            />
-                            <SliderControl
-                                label={isReact ? 'height' : 'Alto'}
-                                value={selectedNode.styles.height}
-                                onChange={(val) => handleChangeStyle('height', val)}
-                                max={800}
-                                step={10}
-                                helpTitle="Alto"
-                                helpDesc="Alto del elemento."
-                            />
-                        </div>
-                    </div>
+                    )}
 
                     {/* Flex Direction (for containers) */}
                     {(selectedNode.type === 'section' || selectedNode.type === 'container' || selectedNode.id === 'root') && (
@@ -1291,72 +1298,74 @@ export const PropertiesPanel = () => {
                 </div>
 
                 {/* Borders */}
-                <div className="space-y-3">
-                    <div className="flex items-center">
-                        <label className="text-xs font-semibold text-slate-700">Bordes</label>
-                        <PropertyHelp title="Bordes" description="Estiliza el contorno del elemento." />
-                    </div>
-                    <div className="grid grid-cols-1 gap-2">
-                        <div>
-                            <SliderControl
-                                label={isReact ? 'borderRadius' : 'Radio (Redondez)'}
-                                value={selectedNode.styles.borderRadius}
-                                onChange={(val) => handleChangeStyle('borderRadius', val)}
-                                max={50}
-                                helpTitle="Radio"
-                                helpDesc="Suaviza las esquinas del elemento."
-                            />
+                {selectedNode.type !== 'background' && selectedNode.type !== 'page' && (
+                    <div className="space-y-3">
+                        <div className="flex items-center">
+                            <label className="text-xs font-semibold text-slate-700">Bordes</label>
+                            <PropertyHelp title="Bordes" description="Estiliza el contorno del elemento." />
                         </div>
-                        <div className="pt-2 border-t border-slate-50 mt-2">
-                            <span className="text-[10px] text-slate-400 mb-2 block font-semibold">Estilo de Borde</span>
-
-                            <div className="space-y-3">
+                        <div className="grid grid-cols-1 gap-2">
+                            <div>
                                 <SliderControl
-                                    label="Grosor"
-                                    value={selectedNode.styles.borderWidth || '0px'}
-                                    onChange={(val) => handleChangeStyle('borderWidth', val)}
-                                    max={20}
-                                    helpTitle="Grosor"
-                                    helpDesc="Ancho del borde en píxeles."
+                                    label={isReact ? 'borderRadius' : 'Radio (Redondez)'}
+                                    value={selectedNode.styles.borderRadius}
+                                    onChange={(val) => handleChangeStyle('borderRadius', val)}
+                                    max={50}
+                                    helpTitle="Radio"
+                                    helpDesc="Suaviza las esquinas del elemento."
                                 />
+                            </div>
+                            <div className="pt-2 border-t border-slate-50 mt-2">
+                                <span className="text-[10px] text-slate-400 mb-2 block font-semibold">Estilo de Borde</span>
 
-                                <div>
-                                    <span className="text-[10px] text-slate-400 mb-1 block">Tipo de Borde</span>
-                                    <select
-                                        value={selectedNode.styles.borderStyle || 'none'}
-                                        onChange={(e) => handleChangeStyle('borderStyle', e.target.value)}
-                                        className="w-full p-2 text-sm border border-slate-200 rounded-lg bg-white"
-                                    >
-                                        <option value="none">Ninguno</option>
-                                        <option value="solid">Sólido (Solid)</option>
-                                        <option value="dashed">Guiones (Dashed)</option>
-                                        <option value="dotted">Puntos (Dotted)</option>
-                                        <option value="double">Doble</option>
-                                    </select>
-                                </div>
+                                <div className="space-y-3">
+                                    <SliderControl
+                                        label="Grosor"
+                                        value={selectedNode.styles.borderWidth || '0px'}
+                                        onChange={(val) => handleChangeStyle('borderWidth', val)}
+                                        max={20}
+                                        helpTitle="Grosor"
+                                        helpDesc="Ancho del borde en píxeles."
+                                    />
 
-                                <div>
-                                    <span className="text-[10px] text-slate-400 mb-1 block">Color del Borde</span>
-                                    <div className="flex items-center gap-2 border border-slate-200 rounded-lg p-1">
-                                        <input
-                                            type="color"
-                                            value={selectedNode.styles.borderColor || '#000000'}
-                                            onChange={(e) => handleChangeStyle('borderColor', e.target.value)}
-                                            className="w-6 h-6 rounded cursor-pointer border-none p-0"
-                                        />
-                                        <input
-                                            type="text"
-                                            value={selectedNode.styles.borderColor || ''}
-                                            onChange={(e) => handleChangeStyle('borderColor', e.target.value)}
-                                            className="w-full text-xs outline-none bg-transparent"
-                                            placeholder="#000000"
-                                        />
+                                    <div>
+                                        <span className="text-[10px] text-slate-400 mb-1 block">Tipo de Borde</span>
+                                        <select
+                                            value={selectedNode.styles.borderStyle || 'none'}
+                                            onChange={(e) => handleChangeStyle('borderStyle', e.target.value)}
+                                            className="w-full p-2 text-sm border border-slate-200 rounded-lg bg-white"
+                                        >
+                                            <option value="none">Ninguno</option>
+                                            <option value="solid">Sólido (Solid)</option>
+                                            <option value="dashed">Guiones (Dashed)</option>
+                                            <option value="dotted">Puntos (Dotted)</option>
+                                            <option value="double">Doble</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <span className="text-[10px] text-slate-400 mb-1 block">Color del Borde</span>
+                                        <div className="flex items-center gap-2 border border-slate-200 rounded-lg p-1">
+                                            <input
+                                                type="color"
+                                                value={selectedNode.styles.borderColor || '#000000'}
+                                                onChange={(e) => handleChangeStyle('borderColor', e.target.value)}
+                                                className="w-6 h-6 rounded cursor-pointer border-none p-0"
+                                            />
+                                            <input
+                                                type="text"
+                                                value={selectedNode.styles.borderColor || ''}
+                                                onChange={(e) => handleChangeStyle('borderColor', e.target.value)}
+                                                className="w-full text-xs outline-none bg-transparent"
+                                                placeholder="#000000"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 {/* Visual Effects & Blending */}
                 <div className="space-y-3">
@@ -1446,37 +1455,143 @@ export const PropertiesPanel = () => {
                     </div>
                 </div>
 
-                {/* Animations */}
-                <div className="space-y-3">
-                    <div className="flex items-center">
-                        <label className="text-xs font-semibold text-slate-700">Animaciones</label>
-                        <PropertyHelp title="Animaciones" description="Agrega movimiento." />
+                {/* Animations Panel (Premium) */}
+                {['image', 'video', 'icon', 'container', 'button'].includes(selectedNode.type) && (
+                    <div className="space-y-4 pt-4 border-t border-slate-200 mt-4">
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-slate-800">⚡ Animaciones</span>
+                            <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-full uppercase tracking-wider">Nuevo</span>
+                        </div>
+
+                        {/* Hover Effects */}
+                        <div>
+                            <span className="text-[10px] text-slate-400 mb-1 block uppercase font-bold tracking-wider">Efecto Hover (Al pasar mouse)</span>
+                            <select
+                                value={
+                                    (selectedNode.className || '').includes('hover:scale-105') ? 'zoom' :
+                                        (selectedNode.className || '').includes('hover:-translate-y-1') ? 'elevation' :
+                                            (selectedNode.className || '').includes('hover:brightness-110') ? 'brightness' :
+                                                (selectedNode.className || '').includes('grayscale') ? 'grayscale' : 'none'
+                                }
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    let currentClass = selectedNode.className || '';
+
+                                    // Remove existing specific hover classes to avoid conflicts
+                                    currentClass = currentClass
+                                        .replace(/hover:scale-105|transition-transform|duration-300|ease-out/g, '')
+                                        .replace(/hover:-translate-y-1|hover:shadow-xl|transition-all/g, '')
+                                        .replace(/hover:brightness-110/g, '')
+                                        .replace(/grayscale|hover:grayscale-0|duration-500/g, '')
+                                        .trim();
+
+                                    let newClass = currentClass;
+
+                                    // Always add base transition for smoothness if any effect is selected
+                                    const baseTransition = ' transition-all duration-300';
+
+                                    switch (val) {
+                                        case 'zoom':
+                                            newClass += `${baseTransition} hover:scale-105 ease-out`;
+                                            break;
+                                        case 'elevation':
+                                            newClass += `${baseTransition} hover:-translate-y-1 hover:shadow-xl`;
+                                            break;
+                                        case 'brightness':
+                                            newClass += `${baseTransition} hover:brightness-110`;
+                                            break;
+                                        case 'grayscale':
+                                            newClass += `${baseTransition} duration-500 grayscale hover:grayscale-0`;
+                                            break;
+                                        default:
+                                            // 'none' - clean state (already cleaned above)
+                                            break;
+                                    }
+
+                                    updateProperty(selectedId, 'className', newClass.trim());
+                                }}
+                                className="w-full p-2 text-sm border border-slate-200 rounded-lg bg-white outline-none focus:border-indigo-500 transition-colors"
+                            >
+                                <option value="none">Ninguno</option>
+                                <option value="zoom">Zoom Suave</option>
+                                <option value="elevation">Elevación (Sombra)</option>
+                                <option value="brightness">Brillo</option>
+                                <option value="grayscale">Blanco y Negro a Color</option>
+                            </select>
+                        </div>
+
+                        {/* Click Effects */}
+                        <div>
+                            <span className="text-[10px] text-slate-400 mb-1 block uppercase font-bold tracking-wider">Efecto Click (Al presionar)</span>
+                            <select
+                                value={
+                                    (selectedNode.className || '').includes('active:scale-95') ? 'clicky' :
+                                        (selectedNode.className || '').includes('active:animate-bounce') ? 'bounce' : 'none'
+                                }
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    let currentClass = selectedNode.className || '';
+
+                                    // Remove existing click classes
+                                    currentClass = currentClass
+                                        .replace(/active:scale-95|transition-transform|duration-100/g, '')
+                                        .replace(/active:animate-bounce/g, '')
+                                        .trim();
+
+                                    let newClass = currentClass;
+
+                                    switch (val) {
+                                        case 'clicky':
+                                            // Ensure transition exists if not already (though usually handled by hover)
+                                            if (!newClass.includes('transition')) newClass += ' transition-transform duration-100';
+                                            newClass += ' active:scale-95';
+                                            break;
+                                        case 'bounce':
+                                            newClass += ' active:animate-bounce';
+                                            break;
+                                        default:
+                                            break;
+                                    }
+
+                                    updateProperty(selectedId, 'className', newClass.trim());
+                                }}
+                                className="w-full p-2 text-sm border border-slate-200 rounded-lg bg-white outline-none focus:border-indigo-500 transition-colors"
+                            >
+                                <option value="none">Ninguno</option>
+                                <option value="clicky">Hundir (Clicky)</option>
+                                <option value="bounce">Rebote</option>
+                            </select>
+                        </div>
+
+                        {/* Scroll Reveal */}
+                        <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg border border-slate-100">
+                            <div className="flex flex-col">
+                                <span className="text-xs font-semibold text-slate-700">Animar al aparecer</span>
+                                <span className="text-[10px] text-slate-400">Efecto de entrada al hacer scroll</span>
+                            </div>
+                            <input
+                                type="checkbox"
+                                checked={(selectedNode.className || '').includes('animate-in')}
+                                onChange={(e) => {
+                                    const isChecked = e.target.checked;
+                                    let currentClass = selectedNode.className || '';
+
+                                    // Using Tailwind Animate presets
+                                    const revealClasses = 'animate-in fade-in slide-in-from-bottom-4 duration-700';
+
+                                    if (isChecked) {
+                                        updateProperty(selectedId, 'className', `${currentClass} ${revealClasses}`.trim());
+                                    } else {
+                                        // Remove all parts of the animation string
+                                        const cleanClass = currentClass.replace(/animate-in|fade-in|slide-in-from-bottom-4|duration-700/g, '').trim();
+                                        updateProperty(selectedId, 'className', cleanClass);
+                                    }
+                                }}
+                                className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                            />
+                        </div>
                     </div>
-                    <div>
-                        <span className={clsx("text-[10px] mb-1 block", isReact ? "font-mono text-slate-500" : "text-slate-400")}>
-                            {isReact ? 'animation' : 'Efecto'}
-                        </span>
-                        <select
-                            value={selectedNode.styles.animation || 'none'}
-                            onChange={(e) => handleChangeStyle('animation', e.target.value)}
-                            className="w-full p-2 text-sm border border-slate-200 rounded-lg bg-white"
-                        >
-                            <option value="none">Ninguna</option>
-                            <optgroup label="Atención">
-                                <option value="bounce 1s infinite">Rebote</option>
-                                <option value="pulse 2s infinite">Pulso</option>
-                                <option value="shake 1s infinite">Sacudida</option>
-                                <option value="swing 1s infinite">Balanceo</option>
-                            </optgroup>
-                            <optgroup label="Entrada">
-                                <option value="fadeIn 1s ease-in">Aparecer</option>
-                                <option value="fadeInUp 1s ease-in">Desde Abajo</option>
-                                <option value="slideInRight 1s ease-out">Deslizar Derecha</option>
-                                <option value="zoomIn 1s ease-in">Zoom In</option>
-                            </optgroup>
-                        </select>
-                    </div>
-                </div>
+                )}
 
             </div >
         </div >

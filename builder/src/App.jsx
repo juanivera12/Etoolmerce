@@ -22,6 +22,51 @@ function App() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showGlobalSettings, setShowGlobalSettings] = useState(false);
 
+  // Keyboard Shortcuts
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ignore if typing in input/textarea
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+      const { undo, redo, copy, paste, deleteElement, selectedId } = useEditorStore.getState();
+
+      // Undo: Ctrl+Z
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      }
+
+      // Redo: Ctrl+Y or Ctrl+Shift+Z
+      if (((e.ctrlKey || e.metaKey) && e.key === 'y') || ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey)) {
+        e.preventDefault();
+        redo();
+      }
+
+      // Copy: Ctrl+C
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+        e.preventDefault();
+        copy();
+      }
+
+      // Paste: Ctrl+V
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+        // Paste needs async read if real clipboard? 
+        // We are using internal state clipboard for now as requested.
+        e.preventDefault();
+        paste();
+      }
+
+      // Delete (Bonus: standard UX)
+      if (e.key === 'Delete' && selectedId) {
+        e.preventDefault();
+        deleteElement(selectedId);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
     <>
       <MainLayout

@@ -259,7 +259,6 @@ export const Sidebar = () => {
                         </SidebarCategory>
 
                         <SidebarCategory title="Básicos" defaultOpen={true}>
-                            <DraggableItem type="background" icon={<Maximize />} label="Fondo" variant="blue" />
                             <DraggableItem type="text" icon={<Type />} label="Texto" variant="blue" />
                             <DraggableItem type="video" icon={<Video />} label="Video" variant="blue" />
                             <DraggableItem type="button" icon={<RectangleHorizontal />} label="Botón" variant="blue" />

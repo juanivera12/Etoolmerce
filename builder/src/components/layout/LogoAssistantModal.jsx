@@ -197,7 +197,7 @@ export const LogoAssistantModal = ({ onClose }) => {
     ];
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[99999] flex items-center justify-center animate-in fade-in duration-200">
             <div className="bg-white rounded-xl shadow-2xl w-[700px] border border-white/20 overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[80vh]">
                 {/* Header */}
                 <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">

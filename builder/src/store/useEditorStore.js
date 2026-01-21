@@ -15,7 +15,9 @@ const createPage = (name, isHome = false) => ({
             padding: "0px",
             display: "flex",
             flexDirection: "column",
-            gap: "0px"
+            gap: "0px",
+            position: "relative",
+            isolation: "isolate"
         },
         children: isHome ? [
             {
@@ -96,8 +98,24 @@ const initialHome = createPage("Inicio", true);
 const createNode = (type, customStyles = {}) => {
     const id = `${type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    // Base node structure
-    let node = { id, type, className: '', styles: { padding: "10px", ...customStyles }, children: [] };
+    // Global default for all content to sit above background
+    const baseStyles = {
+        position: 'relative',
+        zIndex: '10'
+    };
+
+    // Base node structure (fallback)
+    let node = {
+        id,
+        type,
+        className: '',
+        styles: {
+            padding: "10px",
+            ...baseStyles,
+            ...customStyles
+        },
+        children: []
+    };
 
     switch (type) {
         case 'section':
@@ -117,11 +135,143 @@ const createNode = (type, customStyles = {}) => {
                     alignItems: "stretch",
                     border: "none",
                     gap: "10px",
-                    position: "relative",
+                    ...baseStyles,
                     ...customStyles
                 },
                 layoutMode: 'stack',
                 children: []
+            };
+
+        case 'header':
+            return {
+                id, type,
+                styles: {
+                    width: '100%',
+                    padding: '16px 40px',
+                    backgroundColor: '#ffffff',
+                    borderBottom: '1px solid #e2e8f0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    position: 'relative',
+                    zIndex: '100',
+                    ...customStyles
+                },
+                children: [
+                    {
+                        id: `${id}-logo`,
+                        type: 'image',
+                        content: 'https://via.placeholder.com/120x40?text=LOGO',
+                        styles: { width: '120px', height: 'auto', objectFit: 'contain' }
+                    },
+                    {
+                        id: `${id}-nav`, type: 'container',
+                        styles: { display: 'flex', gap: '32px', alignItems: 'center' },
+                        children: [
+                            { id: `${id}-l1`, type: 'link', content: 'Inicio', href: '#' },
+                            { id: `${id}-l2`, type: 'link', content: 'Productos', href: '#' },
+                            { id: `${id}-l3`, type: 'link', content: 'Sobre Nosotros', href: '#' }
+                        ]
+                    },
+                    {
+                        id: `${id}-actions`, type: 'container',
+                        styles: { display: 'flex', gap: '16px' },
+                        children: [
+                            { id: `${id}-search`, type: 'icon', content: 'Search', styles: { cursor: 'pointer', color: '#1e293b' } }
+                        ]
+                    }
+                ]
+            };
+
+        case 'footer':
+            return {
+                id, type,
+                styles: {
+                    width: '100%',
+                    padding: '60px 40px 20px',
+                    backgroundColor: '#111111',
+                    color: 'white',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '40px',
+                    position: 'relative',
+                    marginTop: 'auto',
+                    ...customStyles
+                },
+                children: [
+                    // Top Section: Columns
+                    {
+                        id: `${id}-cols`, type: 'container',
+                        styles: {
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
+                            width: '100%',
+                            flexWrap: 'wrap',
+                            gap: '40px'
+                        },
+                        children: [
+                            // Column 1: Main Actions (Uppsercase Bold)
+                            {
+                                id: `${id}-c1`, type: 'container', styles: { display: 'flex', flexDirection: 'column', gap: '12px' }, children: [
+                                    { id: `${id}-c1-1`, type: 'text', content: 'BUSCAR TIENDA', styles: { fontSize: '14px', fontWeight: '800', cursor: 'pointer' } },
+                                    { id: `${id}-c1-2`, type: 'text', content: 'HACETE MIEMBRO', styles: { fontSize: '14px', fontWeight: '800', cursor: 'pointer' } },
+                                    { id: `${id}-c1-3`, type: 'text', content: 'ENVÍO', styles: { fontSize: '14px', fontWeight: '800', cursor: 'pointer' } }
+                                ]
+                            },
+                            // Column 2: Help (Gray Links)
+                            {
+                                id: `${id}-c2`, type: 'container', styles: { display: 'flex', flexDirection: 'column', gap: '12px' }, children: [
+                                    { id: `${id}-c2-h`, type: 'text', content: 'AYUDA', styles: { fontSize: '14px', fontWeight: '800', marginBottom: '4px' } },
+                                    { id: `${id}-c2-1`, type: 'text', content: 'Envíos y entregas', styles: { fontSize: '12px', color: '#7e7e7e', cursor: 'pointer' } },
+                                    { id: `${id}-c2-2`, type: 'text', content: 'Devoluciones', styles: { fontSize: '12px', color: '#7e7e7e', cursor: 'pointer' } },
+                                    { id: `${id}-c2-3`, type: 'text', content: 'Contacto', styles: { fontSize: '12px', color: '#7e7e7e', cursor: 'pointer' } }
+                                ]
+                            },
+                            // Column 3: About
+                            {
+                                id: `${id}-c3`, type: 'container', styles: { display: 'flex', flexDirection: 'column', gap: '12px' }, children: [
+                                    { id: `${id}-c3-h`, type: 'text', content: 'ACERCA DE', styles: { fontSize: '14px', fontWeight: '800', marginBottom: '4px' } },
+                                    { id: `${id}-c3-1`, type: 'text', content: 'Noticias', styles: { fontSize: '12px', color: '#7e7e7e', cursor: 'pointer' } },
+                                    { id: `${id}-c3-2`, type: 'text', content: 'Inversores', styles: { fontSize: '12px', color: '#7e7e7e', cursor: 'pointer' } },
+                                    { id: `${id}-c3-3`, type: 'text', content: 'Sustentabilidad', styles: { fontSize: '12px', color: '#7e7e7e', cursor: 'pointer' } }
+                                ]
+                            },
+                            // Column 4: Socials
+                            {
+                                id: `${id}-soc`, type: 'container', styles: { display: 'flex', gap: '16px' }, children: [
+                                    { id: `${id}-s1`, type: 'icon', content: 'Twitter', styles: { color: '#7e7e7e', cursor: 'pointer' } },
+                                    { id: `${id}-s2`, type: 'icon', content: 'Facebook', styles: { color: '#7e7e7e', cursor: 'pointer' } },
+                                    { id: `${id}-s3`, type: 'icon', content: 'Youtube', styles: { color: '#7e7e7e', cursor: 'pointer' } },
+                                    { id: `${id}-s4`, type: 'icon', content: 'Instagram', styles: { color: '#7e7e7e', cursor: 'pointer' } }
+                                ]
+                            }
+                        ]
+                    },
+                    // Bottom Section: Legal
+                    {
+                        id: `${id}-legal`, type: 'container',
+                        styles: {
+                            borderTop: '1px solid #333333',
+                            paddingTop: '20px',
+                            width: '100%',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: '20px'
+                        },
+                        children: [
+                            { id: `${id}-copy`, type: 'text', content: '© 2024 EToolMerce, Inc. Todos los derechos reservados.', styles: { fontSize: '12px', color: '#7e7e7e' } },
+                            {
+                                id: `${id}-lnks`, type: 'container', styles: { display: 'flex', gap: '20px' }, children: [
+                                    { id: `${id}-lgl1`, type: 'text', content: 'Guías', styles: { fontSize: '12px', color: '#7e7e7e', cursor: 'pointer' } },
+                                    { id: `${id}-lgl2`, type: 'text', content: 'Términos de Uso', styles: { fontSize: '12px', color: '#7e7e7e', cursor: 'pointer' } },
+                                    { id: `${id}-lgl3`, type: 'text', content: 'Política de Privacidad', styles: { fontSize: '12px', color: '#7e7e7e', cursor: 'pointer' } }
+                                ]
+                            }
+                        ]
+                    }
+                ]
             };
 
         case 'text': {
@@ -130,32 +280,18 @@ const createNode = (type, customStyles = {}) => {
                 id,
                 type,
                 content: "Edita este texto",
-                children: [], // Ensure children exists
+                children: [],
                 ...restProps,
                 styles: {
                     fontSize: "16px",
                     color: "#334155",
                     padding: "8px",
+                    ...baseStyles,
                     ...passedStyles
                 }
             };
         }
-        case 'background':
-            return {
-                id,
-                type,
-                styles: {
-                    position: "absolute",
-                    top: "0",
-                    left: "0",
-                    width: "100%",
-                    minHeight: "100vh",
-                    backgroundColor: "#cbd5e1",
-                    zIndex: "0",
-                    ...customStyles
-                },
-                children: []
-            };
+
 
         case 'image': {
             const { styles: passedStyles = {}, ...restProps } = customStyles;
@@ -163,13 +299,13 @@ const createNode = (type, customStyles = {}) => {
                 id,
                 type,
                 content: "https://via.placeholder.com/300x200",
-                children: [], // Ensure children exists
+                children: [],
                 ...restProps,
                 styles: {
-                    width: "100%",
                     height: "auto",
                     borderRadius: "8px",
                     objectFit: "cover",
+                    ...baseStyles,
                     ...passedStyles
                 }
             };
@@ -186,7 +322,8 @@ const createNode = (type, customStyles = {}) => {
                     display: "flex",
                     flexDirection: "column",
                     gap: "12px",
-                    width: "250px"
+                    width: "250px",
+                    ...baseStyles
                 },
                 children: [
                     {
@@ -222,7 +359,8 @@ const createNode = (type, customStyles = {}) => {
                     backgroundColor: "#1e293b",
                     color: "white",
                     gap: "24px",
-                    textAlign: "center"
+                    textAlign: "center",
+                    ...baseStyles
                 },
                 children: [
                     {
@@ -266,7 +404,8 @@ const createNode = (type, customStyles = {}) => {
                     flexDirection: "column",
                     gap: "16px",
                     width: "300px",
-                    border: "1px solid #e2e8f0"
+                    border: "1px solid #e2e8f0",
+                    ...baseStyles
                 },
                 children: [
                     {
@@ -293,7 +432,7 @@ const createNode = (type, customStyles = {}) => {
         case 'spacer':
             return {
                 id, type,
-                styles: { height: '50px', width: '100%', backgroundColor: 'transparent' }
+                styles: { height: '50px', width: '100%', backgroundColor: 'transparent', ...baseStyles }
             };
         case 'icon': {
             const { styles: passedStyles = {}, ...restProps } = customStyles;
@@ -307,6 +446,7 @@ const createNode = (type, customStyles = {}) => {
                     display: 'inline-block',
                     width: '48px', // Default width for SVGs
                     height: '48px',
+                    ...baseStyles,
                     ...passedStyles
                 }
             };
@@ -317,7 +457,7 @@ const createNode = (type, customStyles = {}) => {
                 content: 'Título del Acordeón',
                 styles: {
                     width: '100%', border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden',
-                    backgroundColor: 'white', display: 'flex', flexDirection: 'column'
+                    backgroundColor: 'white', display: 'flex', flexDirection: 'column', ...baseStyles
                 },
                 children: [
                     { id: `${id}-content`, type: 'container', styles: { padding: '16px', backgroundColor: '#f8fafc', minHeight: '50px' } }
@@ -334,7 +474,8 @@ const createNode = (type, customStyles = {}) => {
                     flexDirection: 'column',
                     alignItems: 'center',
                     gap: '16px',
-                    borderRadius: '8px'
+                    borderRadius: '8px',
+                    ...baseStyles
                 },
                 children: [
                     { id: `${id}-title`, type: 'text', content: 'Suscríbete a nuestro Newsletter', styles: { fontSize: '20px', fontWeight: 'bold' } },
@@ -352,7 +493,7 @@ const createNode = (type, customStyles = {}) => {
         case 'carousel':
             return {
                 id, type,
-                styles: { width: '100%', height: '300px', position: 'relative', overflow: 'hidden', backgroundColor: '#e2e8f0' },
+                styles: { width: '100%', height: '300px', position: 'relative', overflow: 'hidden', backgroundColor: '#e2e8f0', ...baseStyles },
                 children: [
                     { id: `${id}-s1`, type: 'image', content: 'https://via.placeholder.com/800x400/1e293b/ffffff?text=Slide+1', styles: { width: '100%', height: '100%', objectFit: 'cover' } },
                     { id: `${id}-s2`, type: 'image', content: 'https://via.placeholder.com/800x400/4f46e5/ffffff?text=Slide+2', styles: { width: '100%', height: '100%', objectFit: 'cover' } },
@@ -362,7 +503,7 @@ const createNode = (type, customStyles = {}) => {
         case 'tabs':
             return {
                 id, type,
-                styles: { width: '100%', display: 'flex', flexDirection: 'column', gap: '0' },
+                styles: { width: '100%', display: 'flex', flexDirection: 'column', gap: '0', ...baseStyles },
                 children: [
                     {
                         id: `${id}-header`, type: 'container',
@@ -384,7 +525,8 @@ const createNode = (type, customStyles = {}) => {
                     gridTemplateColumns: 'repeat(3, 1fr)',
                     gap: '20px',
                     width: '100%',
-                    padding: '20px'
+                    padding: '20px',
+                    ...baseStyles
                 },
                 children: [
                     {
@@ -420,7 +562,8 @@ const createNode = (type, customStyles = {}) => {
             return {
                 id, type,
                 styles: {
-                    position: 'relative', display: 'flex', alignItems: 'center', zIndex: '40'
+                    position: 'relative', display: 'flex', alignItems: 'center', zIndex: '40',
+                    ...baseStyles, zIndex: '40' // Override base for cart
                 },
                 children: [
                     // Trigger Button
@@ -977,64 +1120,195 @@ const createNode = (type, customStyles = {}) => {
                 }
             };
 
-        case 'footer':
+        case 'header':
             return {
                 id,
                 type,
                 styles: {
-                    order: '9999', // Force Bottom
-                    marginTop: 'auto', // Push to bottom of flex container
+                    order: '-9999', // Force Top
                     width: '100%',
-                    padding: "48px 20px",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    backgroundColor: "#f8fafc",
-                    borderTop: "1px solid #e2e8f0",
-                    gap: "24px",
+                    padding: '16px 40px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    backgroundColor: '#ffffff',
+                    borderBottom: '1px solid #e2e8f0',
+                    zIndex: '50',
                     ...customStyles
                 },
                 children: [
                     {
                         id: `${id}-brand`,
                         type: 'container',
-                        styles: { display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", padding: 0, border: 'none', background: 'transparent' },
+                        styles: { display: "flex", alignItems: "center", gap: "10px", padding: 0, border: 'none', background: 'transparent' },
                         children: [
+                            { id: `${id}-logo`, type: 'icon', content: 'Store', styles: { width: '28px', height: '28px', color: '#4f46e5' } },
+                            { id: `${id}-title`, type: 'text', content: 'Mi Store', styles: { fontSize: "20px", fontWeight: "700", color: "#0f172a" } }
+                        ]
+                    },
+                    {
+                        id: `${id}-nav`,
+                        type: 'container',
+                        styles: { display: "flex", alignItems: "center", gap: "32px", padding: 0, border: 'none', background: 'transparent' },
+                        children: [
+                            { id: `${id}-l1`, type: 'link', content: 'Inicio', href: '#', styles: { color: "#64748b", fontWeight: "500", fontSize: '14px' } },
+                            { id: `${id}-l2`, type: 'link', content: 'Productos', href: '#', styles: { color: "#64748b", fontWeight: "500", fontSize: '14px' } },
+                            { id: `${id}-l3`, type: 'link', content: 'Ofertas', href: '#', styles: { color: "#64748b", fontWeight: "500", fontSize: '14px' } },
+                        ]
+                    },
+                    {
+                        id: `${id}-actions`,
+                        type: 'container',
+                        styles: { display: "flex", alignItems: "center", gap: "16px", padding: 0, border: 'none', background: 'transparent' },
+                        children: [
+                            { id: `${id}-search`, type: 'icon', content: 'Search', styles: { width: '20px', height: '20px', color: '#64748b', cursor: 'pointer' } },
+                            { id: `${id}-cart`, type: 'icon', content: 'ShoppingBag', styles: { width: '20px', height: '20px', color: '#64748b', cursor: 'pointer' } }
+                        ]
+                    }
+                ]
+            };
+
+        case 'footer':
+            return {
+                id,
+                type,
+                styles: {
+                    order: '9999',
+                    marginTop: 'auto', // Force to bottom
+                    width: '100%',
+                    backgroundColor: '#111111',
+                    color: '#ffffff',
+                    padding: '60px 20px 20px 20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '60px',
+                    ...customStyles
+                },
+                children: [
+                    // TOP SECTION: Columns
+                    {
+                        id: `${id}-top`,
+                        type: 'container',
+                        styles: {
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: '40px',
+                            width: '100%',
+                            maxWidth: '1200px',
+                            margin: '0 auto',
+                            padding: 0,
+                            background: 'transparent',
+                            border: 'none',
+                            alignItems: 'flex-start'
+                        },
+                        children: [
+                            // COL 1: Main Actions (Uppercase, Bold)
                             {
-                                id: `${id}-ftitle`,
-                                type: 'text',
-                                content: "Mi E-Commerce",
-                                styles: { fontSize: "18px", fontWeight: "700", color: "#1e293b" }
+                                id: `${id}-c1`,
+                                type: 'container',
+                                styles: { display: 'flex', flexDirection: 'column', gap: '16px', padding: 0, border: 'none', background: 'transparent' },
+                                children: [
+                                    { id: `${id}-a1`, type: 'text', content: 'BUSCAR TIENDA', styles: { fontSize: '14px', fontWeight: '800', color: '#ffffff', cursor: 'pointer', textTransform: 'uppercase', fontFamily: 'Inter, sans-serif' } },
+                                    { id: `${id}-a2`, type: 'text', content: 'HACETE MIEMBRO', styles: { fontSize: '14px', fontWeight: '800', color: '#ffffff', cursor: 'pointer', textTransform: 'uppercase', fontFamily: 'Inter, sans-serif' } },
+                                    { id: `${id}-a3`, type: 'text', content: 'DESCUENTOS', styles: { fontSize: '14px', fontWeight: '800', color: '#ffffff', cursor: 'pointer', textTransform: 'uppercase', fontFamily: 'Inter, sans-serif' } },
+                                ]
                             },
+                            // COL 2: Ayuda
                             {
-                                id: `${id}-logo`,
-                                type: 'image',
-                                content: "",
-                                styles: { width: "40px", height: "40px", objectFit: "contain", opacity: "0.8" }
+                                id: `${id}-c2`,
+                                type: 'container',
+                                styles: { display: 'flex', flexDirection: 'column', gap: '12px', padding: 0, border: 'none', background: 'transparent' },
+                                children: [
+                                    { id: `${id}-h1`, type: 'text', content: 'AYUDA', styles: { fontSize: '14px', fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', marginBottom: '4px', fontFamily: 'Inter, sans-serif' } },
+                                    { id: `${id}-l1`, type: 'text', content: 'Envíos y entregas', styles: { fontSize: '12px', color: '#9ca3af', cursor: 'pointer', fontWeight: '500' } },
+                                    { id: `${id}-l2`, type: 'text', content: 'Devoluciones', styles: { fontSize: '12px', color: '#9ca3af', cursor: 'pointer', fontWeight: '500' } },
+                                    { id: `${id}-l3`, type: 'text', content: 'Opciones de pago', styles: { fontSize: '12px', color: '#9ca3af', cursor: 'pointer', fontWeight: '500' } },
+                                    { id: `${id}-l4`, type: 'text', content: 'Contacto', styles: { fontSize: '12px', color: '#9ca3af', cursor: 'pointer', fontWeight: '500' } },
+                                ]
+                            },
+                            // COL 3: Acerca de
+                            {
+                                id: `${id}-c3`,
+                                type: 'container',
+                                styles: { display: 'flex', flexDirection: 'column', gap: '12px', padding: 0, border: 'none', background: 'transparent' },
+                                children: [
+                                    { id: `${id}-h2`, type: 'text', content: 'ACERCA DE', styles: { fontSize: '14px', fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', marginBottom: '4px', fontFamily: 'Inter, sans-serif' } },
+                                    { id: `${id}-l5`, type: 'text', content: 'Noticias', styles: { fontSize: '12px', color: '#9ca3af', cursor: 'pointer', fontWeight: '500' } },
+                                    { id: `${id}-l6`, type: 'text', content: 'Inversores', styles: { fontSize: '12px', color: '#9ca3af', cursor: 'pointer', fontWeight: '500' } },
+                                    { id: `${id}-l7`, type: 'text', content: 'Sustentabilidad', styles: { fontSize: '12px', color: '#9ca3af', cursor: 'pointer', fontWeight: '500' } },
+                                ]
+                            },
+                            // COL 4: Novedades
+                            {
+                                id: `${id}-c4`,
+                                type: 'container',
+                                styles: { display: 'flex', flexDirection: 'column', gap: '12px', padding: 0, border: 'none', background: 'transparent' },
+                                children: [
+                                    { id: `${id}-h3`, type: 'text', content: 'NOVEDADES', styles: { fontSize: '14px', fontWeight: '800', color: '#ffffff', textTransform: 'uppercase', marginBottom: '4px', fontFamily: 'Inter, sans-serif' } },
+                                    { id: `${id}-l8`, type: 'text', content: 'Lanzamientos', styles: { fontSize: '12px', color: '#9ca3af', cursor: 'pointer', fontWeight: '500' } },
+                                    { id: `${id}-l9`, type: 'text', content: 'Eventos', styles: { fontSize: '12px', color: '#9ca3af', cursor: 'pointer', fontWeight: '500' } },
+                                ]
+                            },
+                            // COL 5: Social Icons
+                            {
+                                id: `${id}-c5`,
+                                type: 'container',
+                                styles: { display: 'flex', gap: '16px', padding: 0, border: 'none', background: 'transparent', alignItems: 'start' },
+                                children: [
+                                    { id: `${id}-s1`, type: 'icon', content: 'Twitter', styles: { fontSize: '20px', color: '#9ca3af', cursor: 'pointer', width: '24px', height: '24px' } },
+                                    { id: `${id}-s2`, type: 'icon', content: 'Facebook', styles: { fontSize: '20px', color: '#9ca3af', cursor: 'pointer', width: '24px', height: '24px' } },
+                                    { id: `${id}-s3`, type: 'icon', content: 'Youtube', styles: { fontSize: '20px', color: '#9ca3af', cursor: 'pointer', width: '24px', height: '24px' } },
+                                    { id: `${id}-s4`, type: 'icon', content: 'Instagram', styles: { fontSize: '20px', color: '#9ca3af', cursor: 'pointer', width: '24px', height: '24px' } },
+                                ]
                             }
                         ]
                     },
+                    // BOTTOM SECTION
                     {
-                        id: `${id}-links`,
+                        id: `${id}-bottom`,
                         type: 'container',
-                        styles: { display: "flex", gap: "24px", padding: '0', border: 'none', backgroundColor: 'transparent', flexWrap: "wrap", justifyContent: "center" },
+                        styles: {
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            width: '100%',
+                            maxWidth: '1200px',
+                            margin: '0 auto',
+                            paddingTop: '20px',
+                            borderTop: '1px solid #333333',
+                            background: 'transparent',
+                            flexWrap: 'wrap-reverse',
+                            gap: '20px'
+                        },
                         children: [
-                            { id: `${id}-fl1`, type: 'text', content: "Inicio", styles: { fontSize: "14px", color: "#475569", cursor: 'pointer' } },
-                            { id: `${id}-fl2`, type: 'text', content: "Productos", styles: { fontSize: "14px", color: "#475569", cursor: 'pointer' } },
-                            { id: `${id}-fl3`, type: 'text', content: "Sobre Nosotros", styles: { fontSize: "14px", color: "#475569", cursor: 'pointer' } }
-                        ]
-                    },
-                    { id: `${id}-sep`, type: 'divider', styles: { width: '80%', margin: '0', opacity: 0.5 } },
-                    {
-                        id: `${id}-legal`,
-                        type: 'container',
-                        styles: { display: 'flex', gap: '8px', padding: '0', border: 'none', backgroundColor: 'transparent', flexDirection: "column", alignItems: "center" },
-                        children: [
+                            // Copyright + Location
                             {
-                                id: `${id}-copy`,
-                                type: 'text',
-                                content: "© 2024 Mi E-Commerce. Todos los derechos reservados.",
-                                styles: { fontSize: "12px", color: "#94a3b8" }
+                                id: `${id}-legal-l`,
+                                type: 'container',
+                                styles: { display: 'flex', alignItems: 'center', gap: '16px', padding: 0, border: 'none', background: 'transparent' },
+                                children: [
+                                    {
+                                        id: `${id}-loc-container`,
+                                        type: 'container',
+                                        styles: { display: 'flex', alignItems: 'center', gap: '4px', padding: 0, border: 'none', background: 'transparent' },
+                                        children: [
+                                            { id: `${id}-loc-icon`, type: 'icon', content: 'MapPin', styles: { width: '14px', height: '14px', color: '#ffffff' } },
+                                            { id: `${id}-loc-text`, type: 'text', content: 'Argentina', styles: { fontSize: '12px', color: '#ffffff', fontWeight: '600' } }
+                                        ]
+                                    },
+                                    { id: `${id}-copy`, type: 'text', content: '© 2026 Mi E-Commerce. Todos los derechos reservados.', styles: { fontSize: '11px', color: '#6b7280' } }
+                                ]
+                            },
+                            // Links
+                            {
+                                id: `${id}-legal-r`,
+                                type: 'container',
+                                styles: { display: 'flex', gap: '20px', padding: 0, border: 'none', background: 'transparent', flexWrap: 'wrap' },
+                                children: [
+                                    { id: `${id}-lg1`, type: 'text', content: 'Términos y Condiciones', styles: { fontSize: '11px', color: '#6b7280', cursor: 'pointer' } },
+                                    { id: `${id}-lg2`, type: 'text', content: 'Política de Privacidad', styles: { fontSize: '11px', color: '#6b7280', cursor: 'pointer' } },
+                                ]
                             }
                         ]
                     }
@@ -1123,6 +1397,7 @@ export const useEditorStore = create((set, get) => ({
     toggleTutorial: () => set((state) => ({ isTutorialActive: !state.isTutorialActive })),
 
     updateStyles: (id, newStyles) => set((state) => {
+        get().addToHistory();
         const activePage = state.pages.find(p => p.id === state.activePageId);
         if (!activePage) return state;
 
@@ -1137,6 +1412,7 @@ export const useEditorStore = create((set, get) => ({
     }),
 
     updateContent: (id, newContent) => set((state) => {
+        get().addToHistory();
         const activePage = state.pages.find(p => p.id === state.activePageId);
         if (!activePage) return state;
 
@@ -1165,6 +1441,7 @@ export const useEditorStore = create((set, get) => ({
     }),
 
     removeElement: (id) => set((state) => {
+        get().addToHistory();
         const activePage = state.pages.find(p => p.id === state.activePageId);
         if (!activePage) return state;
 
@@ -1188,12 +1465,13 @@ export const useEditorStore = create((set, get) => ({
     }),
 
     addElement: (parentId, type, customStyles = {}) => set((state) => {
+        get().addToHistory();
         const activePage = state.pages.find(p => p.id === state.activePageId);
         if (!activePage) return state;
 
         // Force Root Parent for Global Elements (Header, Footer, Background)
         let targetId = parentId;
-        if (type === 'background' || type === 'header' || type === 'footer') {
+        if (type === 'header' || type === 'footer') {
             targetId = activePage.content.id;
         }
 
@@ -1201,7 +1479,7 @@ export const useEditorStore = create((set, get) => ({
             const newNode = createNode(type, customStyles);
             let newChildren = [...(node.children || [])];
 
-            if (type === 'header' || type === 'background') {
+            if (type === 'header') {
                 // Remove existing header if exists (optional, or just prepend)
                 // Enforce Top (Background at start = behind everything)
                 newChildren.unshift(newNode);
@@ -1231,6 +1509,7 @@ export const useEditorStore = create((set, get) => ({
     }),
 
     addImageElement: (parentId, imageUrl) => set((state) => {
+        get().addToHistory();
         const activePage = state.pages.find(p => p.id === state.activePageId);
         if (!activePage) return state;
 
@@ -1249,6 +1528,7 @@ export const useEditorStore = create((set, get) => ({
     }),
 
     moveElement: (draggedId, targetId, position) => set((state) => {
+        get().addToHistory();
         const activePage = state.pages.find(p => p.id === state.activePageId);
         if (!activePage) return state;
 
@@ -1290,4 +1570,126 @@ export const useEditorStore = create((set, get) => ({
             pages: state.pages.map(p => p.id === state.activePageId ? { ...p, content: updatedContent } : p)
         };
     }),
+
+    // --- History & Clipboard ---
+    past: [],
+    future: [],
+    clipboard: null,
+
+    addToHistory: () => {
+        set((state) => {
+            const currentContent = JSON.parse(JSON.stringify(state.pages.find(p => p.id === state.activePageId).content));
+            // Limit history size to 50
+            const newPast = [...state.past, currentContent].slice(-50);
+            return {
+                past: newPast,
+                future: []
+            };
+        });
+    },
+
+    undo: () => {
+        set((state) => {
+            if (state.past.length === 0) return state;
+            const previous = state.past[state.past.length - 1];
+            const newPast = state.past.slice(0, -1);
+
+            // We need current state to push to future?? 
+            // Standard undo: Current becomes future[0]. Previous becomes Current.
+            const current = JSON.parse(JSON.stringify(state.pages.find(p => p.id === state.activePageId).content));
+
+            const updatedPages = state.pages.map(p => p.id === state.activePageId ? { ...p, content: previous } : p);
+
+            return {
+                past: newPast,
+                future: [current, ...state.future],
+                pages: updatedPages,
+                selectedId: null
+            };
+        });
+    },
+
+    redo: () => {
+        set((state) => {
+            if (state.future.length === 0) return state;
+            const next = state.future[0];
+            const newFuture = state.future.slice(1);
+
+            const current = JSON.parse(JSON.stringify(state.pages.find(p => p.id === state.activePageId).content));
+
+            const updatedPages = state.pages.map(p => p.id === state.activePageId ? { ...p, content: next } : p);
+
+            return {
+                past: [...state.past, current],
+                future: newFuture,
+                pages: updatedPages,
+                selectedId: null
+            };
+        });
+    },
+
+    copy: () => {
+        const state = get();
+        if (!state.selectedId) return;
+
+        // Helper to find node
+        const findNode = (node, id) => {
+            if (node.id === id) return node;
+            if (node.children) {
+                for (const child of node.children) {
+                    const found = findNode(child, id);
+                    if (found) return found;
+                }
+            }
+            return null;
+        };
+
+        const activePage = state.pages.find(p => p.id === state.activePageId);
+        const nodeToCopy = findNode(activePage.content, state.selectedId);
+
+        if (nodeToCopy && nodeToCopy.type !== 'page') {
+            set({ clipboard: JSON.parse(JSON.stringify(nodeToCopy)) });
+        }
+    },
+
+    paste: () => {
+        const state = get();
+        if (!state.clipboard) return;
+
+        state.addToHistory();
+
+        const regenerateIds = (node) => {
+            const newNode = { ...node };
+            newNode.id = `${newNode.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            if (newNode.children) {
+                newNode.children = newNode.children.map(regenerateIds); // recursive
+            }
+            return newNode;
+        };
+
+        const clonedNode = regenerateIds(state.clipboard);
+
+        // Offset if absolute
+        if (clonedNode.styles?.position === 'absolute') {
+            const oldLeft = parseFloat(clonedNode.styles.left) || 0;
+            const oldTop = parseFloat(clonedNode.styles.top) || 0;
+            clonedNode.styles.left = `${oldLeft + 20}px`;
+            clonedNode.styles.top = `${oldTop + 20}px`;
+        }
+
+        // Always paste to root properties or inside container if selected?
+        // Let's stick to Root append for safety in V1 as planned.
+
+        const activePage = state.pages.find(p => p.id === state.activePageId);
+
+        const updatedContent = {
+            ...activePage.content,
+            children: [...(activePage.content.children || []), clonedNode]
+        };
+
+        set({
+            pages: state.pages.map(p => p.id === state.activePageId ? { ...p, content: updatedContent } : p),
+            selectedId: clonedNode.id
+        });
+    },
 }));
