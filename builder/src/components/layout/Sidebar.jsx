@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import {
     Layout, Type, Image, Square, ShoppingCart, PlayCircle, Plus, File, Trash2, Edit2, Check, X, Settings, Link,
     ChevronDown, ChevronRight, Grid, Maximize, List, Columns, Search, Filter, Clock, Star, Megaphone, Menu, Divide, ToggleLeft, CreditCard,
-    Wand2, Loader2, ArrowRight, Zap, Images, Palette, Heading1, RectangleHorizontal, Minus, LayoutGrid, Tag, SlidersHorizontal, DollarSign,
+    ArrowRight, Zap, Images, Palette, Heading1, RectangleHorizontal, Minus, LayoutGrid, Tag, SlidersHorizontal, DollarSign,
     MessageSquareQuote, Mail, Timer, ThumbsUp, Video
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { DraggableItem } from '../ui/DraggableItem';
 import { useEditorStore } from '../../store/useEditorStore';
 import { ProjectSettingsModal } from './ProjectSettingsModal';
-import { LogoAssistantModal } from './LogoAssistantModal';
+import { AdvancedIconPickerModal } from './AdvancedIconPickerModal';
 import clsx from 'clsx';
 
 const SidebarCategory = ({ title, children, defaultOpen = false }) => {
@@ -40,35 +40,9 @@ export const Sidebar = () => {
     const [editingId, setEditingId] = useState(null);
     const [editName, setEditName] = useState('');
     const [showSettings, setShowSettings] = useState(false);
-    const [showLogoModal, setShowLogoModal] = useState(false);
+    const [showIconPicker, setShowIconPicker] = useState(false);
 
-    // AI Gen State
-    const [showAiModal, setShowAiModal] = useState(false);
-    const [aiPrompt, setAiPrompt] = useState('');
-    const [isGenerating, setIsGenerating] = useState(false);
-
-    const handleGenerateAsset = () => {
-        if (!aiPrompt.trim()) return;
-        setIsGenerating(true);
-
-        // Mock API Call
-        setTimeout(() => {
-            const isVideo = aiPrompt.toLowerCase().includes('video');
-            const type = isVideo ? 'video' : 'image';
-            const content = isVideo
-                ? 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'
-                : 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=1000'; // AI-like abstract image
-
-            useEditorStore.getState().addElement(activePageId, type, {
-                content,
-                styles: { width: '100%', height: 'auto', borderRadius: '8px' }
-            });
-
-            setIsGenerating(false);
-            setShowAiModal(false);
-            setAiPrompt('');
-        }, 2000);
-    };
+    // AI Gen State removed
 
     const handleAddPage = () => {
         if (newPageName.trim()) {
@@ -92,68 +66,7 @@ export const Sidebar = () => {
                     <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-violet-400 bg-clip-text text-transparent">
                         E-ToolMerce
                     </h1>
-                    <button
-                        onClick={() => setShowAiModal(true)}
-                        className="p-2 bg-indigo-500/10 text-indigo-500 rounded-lg hover:bg-indigo-500 hover:text-white transition-all shadow-sm group"
-                        title="Generar Asset AI"
-                    >
-                        <LucideIcons.Wand2 size={20} className="group-hover:rotate-12 transition-transform" />
-                    </button>
                 </div>
-
-                {/* AI Modal */}
-                {showAiModal && (
-                    <div className="absolute top-0 left-0 w-full h-full bg-surface/95 backdrop-blur-sm z-50 p-6 flex flex-col animate-in fade-in duration-200">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center gap-2">
-                                <LucideIcons.Wand2 size={20} />
-                                Generador AI
-                            </h3>
-                            <button onClick={() => setShowAiModal(false)} className="text-slate-400 hover:text-slate-600">
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <div className="flex-1 flex flex-col justify-center gap-4">
-                            <div className="space-y-2">
-                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Prompt Mágico</label>
-                                <textarea
-                                    autoFocus
-                                    disabled={isGenerating}
-                                    value={aiPrompt}
-                                    onChange={(e) => setAiPrompt(e.target.value)}
-                                    placeholder="Describe lo que quieres... (ej. 'Un banner de zapatos deportivos' o 'video de paisaje')"
-                                    className="w-full h-32 p-4 rounded-xl border-2 border-indigo-100 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none resize-none transition-all bg-white text-sm"
-                                />
-                            </div>
-
-                            <button
-                                onClick={handleGenerateAsset}
-                                disabled={isGenerating || !aiPrompt.trim()}
-                                className="w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
-                            >
-                                {isGenerating ? (
-                                    <>
-                                        <LucideIcons.Loader2 size={20} className="animate-spin" />
-                                        Generando Magia...
-                                    </>
-                                ) : (
-                                    <>
-                                        Generar Asset
-                                        <LucideIcons.ArrowRight size={20} />
-                                    </>
-                                )}
-                            </button>
-
-                            {!isGenerating && (
-                                <p className="text-center text-xs text-slate-400">
-                                    Simulación: Escribe "video" para generar un elemento de video.
-                                </p>
-                            )}
-                        </div>
-                    </div>
-                )}
-
 
                 <div className="flex-1 overflow-y-auto no-scrollbar">
                     {/* Pages Section */}
@@ -260,9 +173,18 @@ export const Sidebar = () => {
 
                         <SidebarCategory title="Básicos" defaultOpen={true}>
                             <DraggableItem type="text" icon={<Type />} label="Texto" variant="blue" />
+                            <DraggableItem type="image" icon={<Image />} label="Imagen" variant="blue" />
                             <DraggableItem type="video" icon={<Video />} label="Video" variant="blue" />
                             <DraggableItem type="button" icon={<RectangleHorizontal />} label="Botón" variant="blue" />
                             <DraggableItem type="divider" icon={<Minus />} label="Divisor" variant="blue" />
+                            <DraggableItem
+                                type="icon"
+                                icon={<Star />}
+                                label="Icono"
+                                description="Haz clic para elegir icono"
+                                variant="blue"
+                                onClick={() => setShowIconPicker(true)}
+                            />
                         </SidebarCategory>
 
                         <SidebarCategory title="Tienda / E-commerce" defaultOpen={true}>
@@ -279,14 +201,6 @@ export const Sidebar = () => {
                         <SidebarCategory title="Marketing">
                             <DraggableItem type="hero" icon={<Star />} label="Hero Banner" description="Banner principal de impacto." variant="coral" />
                             <DraggableItem type="flashOffer" icon={<Zap />} label="Oferta Flash" description="Bloque de urgencia con cuenta regresiva." variant="coral" />
-                            <DraggableItem
-                                type="brandCarousel"
-                                icon={<Images />}
-                                label="Logos Marcas"
-                                description="Arrastra para carrusel o Click para Importar Logo."
-                                variant="coral"
-                                onClick={() => setShowLogoModal(true)}
-                            />
                             <DraggableItem type="testimonial" icon={<MessageSquareQuote />} label="Testimonios" variant="coral" />
                             <DraggableItem type="newsletter" icon={<Mail />} label="Newsletter" variant="coral" />
                             <DraggableItem type="countdown" icon={<Timer />} label="Countdown" variant="coral" />
@@ -315,7 +229,24 @@ export const Sidebar = () => {
             </div >
 
             {showSettings && <ProjectSettingsModal onClose={() => setShowSettings(false)} />}
-            {showLogoModal && <LogoAssistantModal onClose={() => setShowLogoModal(false)} />}
+
+            {/* Advanced Icon Picker */}
+            {showIconPicker && (
+                <AdvancedIconPickerModal
+                    onClose={() => setShowIconPicker(false)}
+                    onSelect={(iconData) => {
+                        const state = useEditorStore.getState();
+                        const targetId = state.selectedId || state.pages.find(p => p.id === state.activePageId)?.content?.id;
+
+                        if (targetId) {
+                            addElement(targetId, 'icon', {
+                                content: iconData.content,
+                                ...iconData.styles
+                            });
+                        }
+                    }}
+                />
+            )}
         </>
     );
 };

@@ -4,6 +4,8 @@ import clsx from 'clsx';
 import { Resizer } from './Resizer';
 import * as LucideIcons from 'lucide-react';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
+import { ProductCard } from '../shop/ProductCard';
+import { CartWidget } from '../shop/CartWidget';
 
 const ElementWrapper = ({ node, children }) => {
     const { selectedId, selectElement, addElement, moveElement, updateStyles, isPreviewMode, setActivePage } = useEditorStore();
@@ -135,8 +137,14 @@ const ElementWrapper = ({ node, children }) => {
         // If Parent is in Free Layout Mode
         if (node.layoutMode === 'free') {
             const rect = e.currentTarget.getBoundingClientRect();
-            const relX = e.clientX - rect.left;
-            const relY = e.clientY - rect.top;
+            const element = e.currentTarget;
+            // Apply Teleportation Fix (Scroll + Clamp)
+            const rawX = (e.clientX - rect.left) + element.scrollLeft;
+            const rawY = (e.clientY - rect.top) + element.scrollTop;
+            const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
+
+            const relX = clamp(rawX, 0, element.scrollWidth);
+            const relY = clamp(rawY, 0, element.scrollHeight);
 
             // If moving existing element
             if (draggedId) {
@@ -150,7 +158,7 @@ const ElementWrapper = ({ node, children }) => {
 
                 // If moving from another parent, we still need to "move" it in structure
                 if (draggedId !== node.id) {
-                    moveElement(draggedId, node.id, 'after'); // 'after' appends to end
+                    useEditorStore.getState().reparentElement(draggedId, node.id);
                 }
                 return;
             }
@@ -182,22 +190,31 @@ const ElementWrapper = ({ node, children }) => {
                 // For smart drop, if specific zone, maybe we append?
                 // Simple logic: If strict reordering (dropPosition set), do that. 
                 // If smart zone set, append to THIS node.
-                moveElement(draggedId, node.id, 'after');
+                useEditorStore.getState().reparentElement(draggedId, node.id);
             }
             return;
         }
 
-        if (type === 'image') {
-            // ... existing image logic ...
+        if (type === 'image' || type === 'video') {
+            const acceptType = type === 'image' ? 'image/*' : 'video/*';
             const input = document.createElement('input');
             input.type = 'file';
-            input.accept = 'image/*';
+            input.accept = acceptType;
             input.onchange = (event) => {
                 const file = event.target.files[0];
                 if (file) {
                     const reader = new FileReader();
                     reader.onload = (e) => {
-                        useEditorStore.getState().addImageElement(node.id, e.target.result);
+                        if (type === 'image') {
+                            useEditorStore.getState().addImageElement(node.id, e.target.result);
+                        } else {
+                            // For video, we can store the DataURL (small videos) or just a Blob URL if local?
+                            // DataURL is safer for now if we want it to persist in memory store.
+                            // But for large videos, Blob URL is better but ephemeral.
+                            // Let's use DataURL for consistency with Image, warning about size?
+                            // User requirement implies local upload.
+                            useEditorStore.getState().addElement(node.id, 'video', { content: e.target.result });
+                        }
                     };
                     reader.readAsDataURL(file);
                 }
@@ -304,8 +321,20 @@ export const Renderer = ({ node }) => {
 
             // Coordinate Calculation Logic
             const rect = e.currentTarget.getBoundingClientRect();
-            const relX = e.clientX - rect.left;
-            const relY = e.clientY - rect.top;
+            const element = e.currentTarget;
+
+            // Formula: Final = (Mouse - CanvasOffset) + Scroll
+            // rect.left is CanvasOffset (viewport relative)
+            // element.scrollLeft is Scroll
+
+            const rawX = (e.clientX - rect.left) + element.scrollLeft;
+            const rawY = (e.clientY - rect.top) + element.scrollTop;
+
+            // Clamp to bounds (0 to scrollWidth/Height)
+            const clamp = (val, min, max) => Math.min(Math.max(val, min), max); // Safety
+
+            const relX = clamp(rawX, 0, element.scrollWidth);
+            const relY = clamp(rawY, 0, element.scrollHeight);
 
             // Handle Existing Element Move (Drag & Drop)
             const draggedId = e.dataTransfer.getData('application/react-builder-id');
@@ -318,6 +347,7 @@ export const Renderer = ({ node }) => {
                 // For simplicity as requested: "left = MouseX - CanvasX". This puts top-left corner at mouse.
                 // Ideally we center it, but let's stick to the requested formula for precision.
 
+                // Correction: Use the calculated relX/relY
                 useEditorStore.getState().updateStyles(draggedId, {
                     position: 'absolute',
                     left: `${relX}px`,
@@ -326,20 +356,49 @@ export const Renderer = ({ node }) => {
                 });
 
                 // Ensure it's in the root children list if it wasn't
-                const { moveElement } = useEditorStore.getState();
-                moveElement(draggedId, node.id, 'after'); // 'after' appends to end of root
+                const { reparentElement } = useEditorStore.getState();
+                reparentElement(draggedId, node.id); // Moves to inside of node.id
                 return;
             }
 
             // Handle New Element Drop
             const type = e.dataTransfer.getData('application/react-builder-type');
             if (type) {
-                // Determine dimensions based on type if needed, or let auto
-                // Special handling for image file drop
-                if (type === 'image' && e.dataTransfer.files?.length > 0) {
-                    // ... existing image file logic fallback ...
-                    // But usually 'type' comes from sidebar. 
-                    // Files come from 'e.dataTransfer.files'. Logic below handles files.
+                // Auto-Upload for Root Drop (Image & Video)
+                if (type === 'image' || type === 'video') {
+                    const acceptType = type === 'image' ? 'image/*' : 'video/*';
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = acceptType;
+                    input.onchange = (event) => {
+                        const file = event.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => {
+                                if (type === 'image') {
+                                    // We can't easily pass coordinates to addImageElement if it doesn't support it.
+                                    // But let's try to find the node and move it? Or just add it.
+                                    // Actually, addImageElement appends.
+                                    useEditorStore.getState().addImageElement(node.id, ev.target.result);
+                                    // TODO: If we want to respect drop coordinates (relX, relY), we might need to update the last added element.
+                                } else {
+                                    // Video
+                                    useEditorStore.getState().addElement(node.id, 'video', {
+                                        content: ev.target.result,
+                                        styles: {
+                                            position: 'absolute',
+                                            left: `${relX}px`,
+                                            top: `${relY}px`,
+                                            zIndex: '10'
+                                        }
+                                    });
+                                }
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    };
+                    input.click();
+                    return;
                 }
 
                 addElement(node.id, type, {
@@ -675,6 +734,23 @@ export const Renderer = ({ node }) => {
 
 
     // Containers
+    // Smart Components for Shop
+    if (node.type === 'product') {
+        return (
+            <ElementWrapper node={node}>
+                <ProductCard node={node} />
+            </ElementWrapper>
+        );
+    }
+
+    if (node.type === 'cartWidget') {
+        return (
+            <ElementWrapper node={node}>
+                <CartWidget node={node} />
+            </ElementWrapper>
+        );
+    }
+
     return (
         <ElementWrapper node={node}>
             {renderChildren()}

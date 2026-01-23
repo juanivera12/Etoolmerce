@@ -7,14 +7,14 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#f8fafc', // Slate 50
-        surface: '#ffffff',    // White
-        'surface-highlight': '#f1f5f9', // Slate 100
-        border: '#e2e8f0',     // Slate 200
-        primary: '#4f46e5',    // Indigo 600
-        'primary-hover': '#4338ca', // Indigo 700
-        text: '#0f172a',       // Slate 900
-        'text-muted': '#64748b', // Slate 500
+        background: '#121212', // Deep Charcoal / Matte Black
+        surface: '#1E1E1E',    // Dark Gray Panels
+        'surface-highlight': '#2A2A2A', // Slightly lighter for hover
+        border: '#333333',     // Dark Border
+        primary: '#FFD700',    // Banana Yellow
+        'primary-hover': '#FFE135', // Lighter Yellow for hover
+        text: '#FFFFFF',       // White
+        'text-muted': '#9CA3AF', // Gray-400
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],

@@ -32,40 +32,36 @@ export const Resizer = ({ targetRef, id, isSelected }) => {
     if (!isSelected || !targetRef.current) return null;
 
     const handleMouseDown = (e, direction) => {
-        // 1. Stop Propagation: Prevent drag events from parent
         e.stopPropagation();
-        // 2. Prevent Default: Prevent text selection and browser drag
         e.preventDefault();
 
         const element = targetRef.current;
+        const parent = element.offsetParent || document.body; // Canvas Container
+        const parentRect = parent.getBoundingClientRect();
+
         const startX = e.clientX;
         const startY = e.clientY;
+
+        // Capture initial dimensions and position
         const startWidth = element.offsetWidth;
+        const startHeight = element.offsetHeight;
+        const startLeft = parseFloat(element.style.left) || element.offsetLeft;
+        const startTop = parseFloat(element.style.top) || element.offsetTop;
+
         const isStatic = !['absolute', 'fixed', 'relative'].includes(element.style.position);
 
-        // Pinning Calculation:
-        // Calculate the current visual offset relative to parent content box
-        // We use this to "freeze" the element's position by converting visual position to explicit margins,
-        // effectively disabling flex-centering behavior during resize.
-        let pinnedMarginLeft = '';
-        let pinnedMarginTop = '';
+        // Helper: Get Mouse Relative to Canvas (User Formula)
+        const getRelativeMouse = (e) => {
+            // Formula: (Mouse_Page - Canvas_Offset) + Canvas_Scroll
+            // Note: clientX is viewport. parentRect.left is viewport. 
+            // parent.scrollLeft adds the scroll.
+            return {
+                x: (e.clientX - parentRect.left) + parent.scrollLeft,
+                y: (e.clientY - parentRect.top) + parent.scrollTop
+            };
+        };
 
-        if (isStatic && element.parentElement) {
-            const parent = element.parentElement;
-            const parentRect = parent.getBoundingClientRect();
-            const elemRect = element.getBoundingClientRect();
-            const parentStyle = getComputedStyle(parent);
-
-            const pLeft = parseFloat(parentStyle.paddingLeft) || 0;
-            const pTop = parseFloat(parentStyle.paddingTop) || 0;
-
-            // Current visual offsets
-            const visualLeft = elemRect.left - parentRect.left - pLeft;
-            const visualTop = elemRect.top - parentRect.top - pTop;
-
-            pinnedMarginLeft = `${visualLeft}px`;
-            pinnedMarginTop = `${visualTop}px`;
-        }
+        const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
 
         let animationFrameId;
 
@@ -73,59 +69,67 @@ export const Resizer = ({ targetRef, id, isSelected }) => {
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
 
             animationFrameId = requestAnimationFrame(() => {
-                const deltaX = moveEvent.clientX - startX;
+                const currentMouse = getRelativeMouse(moveEvent);
+                const startMouseRelative = getRelativeMouse({ clientX: startX, clientY: startY }); // calculated once ideally, but here diff is fine
+
+                // Deltas based on viewport (standard) or relative? 
+                // User Formula for Resize N:
+                // NewHeight = OldHeight + (OldMouseY - NewMouseY)
+                // NewTop = NewMouseY - Canvas_Offset_Y (Relative Mouse Y)
+
+                // Let's use raw viewport deltas for size logic if consistent, but User asked for specific formula.
+                // We will use the RELATIVE mouse for Position settings as requested.
+
+                const deltaX = moveEvent.clientX - startX; // standard delta for size
                 const deltaY = moveEvent.clientY - startY;
 
                 let newStyles = {};
 
-                // If resizing Right/Bottom of a static element, we must Enforce Pinning
-                // so it doesn't re-center or shift.
-                if (isStatic && pinnedMarginLeft) {
-                    // Only applying pinning if we are NOT adjusting that specific side 
-                    // (e.g. if adjusting Left, we change marginLeft dynamically, so we don't pin static loop)
+                // --- RESIZE NORTH (Top) ---
+                if (direction.includes('top')) {
+                    // User Formula: NewHeight = Height_Viejo + (Mouse_Y_Viejo - Mouse_Y_Nuevo)
+                    // (startY - moveEvent.clientY)
+                    const newHeight = Math.max(0, startHeight + (startY - moveEvent.clientY));
+                    newStyles.height = `${newHeight}px`;
 
-                    // Base Pinning (Lock to Top-Left)
-                    if (!direction.includes('left')) {
-                        newStyles.marginLeft = pinnedMarginLeft;
-                        newStyles.marginRight = 'auto'; // Break justify-content: center
-                        newStyles.alignSelf = 'flex-start'; // Break align-items: center (if flex-col)
-                    }
-                    if (!direction.includes('top')) {
-                        newStyles.marginTop = pinnedMarginTop;
-                        newStyles.marginBottom = 'auto'; // Break vertical center
+                    if (isPositioned) {
+                        // User Formula: NewTop = Mouse_Y_Nuevo - Canvas_Offset_Y
+                        // This is essentially currentMouse.y
+                        // Constraint: Prevent negative (clamp). 
+                        // Also prevent "falling" (top moving down without height checking? No, height handles bottom anchor).
+                        // Actually, if we just set top = mouse, and height = old + difference, checking math:
+                        // Top moves with mouse. Bottom = Top + Height.
+                        // MouseY + (H + StartY - MouseY) = H + StartY. Bottom is constant. Correct.
+
+                        const newTop = clamp(currentMouse.y, 0, parent.scrollHeight);
+                        newStyles.top = `${newTop}px`;
+                    } else {
+                        // Static logic (margin) - kept simple or same logic applied to marginTop
+                        newStyles.marginTop = `${startTop + deltaY}px`; // fallback
                     }
                 }
-
-                // Width changes
-                if (direction.includes('right')) {
-                    newStyles.width = `${startWidth + deltaX}px`;
-                } else if (direction.includes('left')) {
-                    newStyles.width = `${startWidth - deltaX}px`;
-                    if (isPositioned) {
-                        newStyles.left = `${startLeft + deltaX}px`;
-                    } else {
-                        // Dynamic Margin for Left Resize
-                        const startMag = parseFloat(pinnedMarginLeft) || 0;
-                        newStyles.marginLeft = `${startMag + deltaX}px`;
-                        // Also ensure right is released to allow flow
-                        newStyles.marginRight = 'auto';
-                        newStyles.alignSelf = 'flex-start';
-                    }
+                // --- RESIZE SOUTH (Bottom) ---
+                else if (direction.includes('bottom')) {
+                    newStyles.height = `${Math.max(0, startHeight + deltaY)}px`;
                 }
 
-                // Height changes
-                if (direction.includes('bottom')) {
-                    newStyles.height = `${startHeight + deltaY}px`;
-                } else if (direction.includes('top')) {
-                    newStyles.height = `${startHeight - deltaY}px`;
+                // --- RESIZE WEST (Left) ---
+                if (direction.includes('left')) {
+                    // User Formula: NewWidth = Width_Viejo + (Mouse_X_Viejo - Mouse_X_Nuevo)
+                    const newWidth = Math.max(0, startWidth + (startX - moveEvent.clientX));
+                    newStyles.width = `${newWidth}px`;
+
                     if (isPositioned) {
-                        newStyles.top = `${startTop + deltaY}px`;
+                        // User Formula: NewLeft = Mouse_X_Nuevo - Canvas_Offset_X
+                        const newLeft = clamp(currentMouse.x, 0, parent.scrollWidth);
+                        newStyles.left = `${newLeft}px`;
                     } else {
-                        // Dynamic Margin for Top Resize
-                        const startMag = parseFloat(pinnedMarginTop) || 0;
-                        newStyles.marginTop = `${startMag + deltaY}px`;
-                        newStyles.marginBottom = 'auto';
+                        newStyles.marginLeft = `${parseFloat(element.style.marginLeft || 0) + deltaX}px`;
                     }
+                }
+                // --- RESIZE EAST (Right) ---
+                else if (direction.includes('right')) {
+                    newStyles.width = `${Math.max(0, startWidth + deltaX)}px`;
                 }
 
                 updateStyles(id, newStyles);

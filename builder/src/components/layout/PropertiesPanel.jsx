@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useEditorStore, selectActivePageContent } from '../../store/useEditorStore';
 import { Trash2, Type, Image, Layout, AlignLeft, AlignCenter, AlignRight, PlayCircle, HelpCircle, Info, Link } from 'lucide-react';
 import { createPortal } from 'react-dom';
@@ -26,7 +26,7 @@ const PropertyHelp = ({ title, description }) => {
         <>
             <button
                 ref={triggerRef}
-                className="text-slate-300 hover:text-indigo-500 transition-colors ml-2"
+                className="text-text-muted hover:text-primary transition-colors ml-2"
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={() => setShow(false)}
                 onClick={() => setShow(!show)}
@@ -35,7 +35,7 @@ const PropertyHelp = ({ title, description }) => {
             </button>
             {show && createPortal(
                 <div
-                    className="fixed z-[9999] bg-slate-800 text-white text-xs p-3 rounded-lg shadow-xl w-48 border border-slate-700 leading-normal pointer-events-none animate-in fade-in zoom-in-95 duration-150"
+                    className="fixed z-[9999] bg-surface text-text text-xs p-3 rounded-lg shadow-xl w-48 border border-border leading-normal pointer-events-none animate-in fade-in zoom-in-95 duration-150"
                     style={{
                         top: coords.top,
                         left: coords.left - 10, // Slight gap
@@ -67,7 +67,7 @@ const SliderControl = ({ label, value, onChange, min = 0, max = 100, step = 1, h
                     <span className="text-[10px] text-slate-500 font-medium block capitalize">{label}</span>
                     {helpTitle && <PropertyHelp title={helpTitle} description={helpDesc} />}
                 </div>
-                <span className="text-[9px] font-mono text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
+                <span className="text-[9px] font-mono text-text-muted bg-surface-highlight px-1.5 py-0.5 rounded border border-border">
                     {value || '0px'}
                 </span>
             </div>
@@ -78,7 +78,7 @@ const SliderControl = ({ label, value, onChange, min = 0, max = 100, step = 1, h
                 step={step}
                 value={numericValue}
                 onChange={handleChange}
-                className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 hover:accent-indigo-500 transition-all"
+                className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary hover:accent-primary-hover transition-all"
             />
         </div>
     );
@@ -129,17 +129,17 @@ export const PropertiesPanel = () => {
     };
 
     return (
-        <div className="flex flex-col h-full">
-            <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
+        <div className="flex flex-col h-full bg-surface">
+            <div className="p-4 border-b border-border flex justify-between items-center bg-surface sticky top-0 z-10">
                 <div className="flex flex-col">
-                    <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider flex items-center gap-2">
+                    <span className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
                         {selectedNode.type === 'text' && <Type size={14} />}
                         {selectedNode.type === 'image' && <Image size={14} />}
                         {selectedNode.type === 'video' && <PlayCircle size={14} />}
                         {selectedNode.type === 'section' && <Layout size={14} />}
                         {selectedNode.type.toUpperCase()}
                     </span>
-                    <span className="text-[9px] text-slate-400 font-mono mt-0.5">
+                    <span className="text-[9px] text-text-muted font-mono mt-0.5">
                         {isReact ? `<${selectedNode.type === 'section' ? 'Section' : selectedNode.type} />` : `<${selectedNode.type}>`}
                     </span>
                 </div>
@@ -147,7 +147,7 @@ export const PropertiesPanel = () => {
                 {selectedNode.id !== 'root' && (
                     <button
                         onClick={() => removeElement(selectedId)}
-                        className="text-red-500 hover:bg-red-100 p-1.5 rounded-md transition-colors border border-red-200 bg-red-50"
+                        className="text-red-400 hover:bg-red-900/20 p-1.5 rounded-md transition-colors border border-red-900/30 bg-red-900/10"
                         title="Eliminar elemento"
                     >
                         <Trash2 size={18} />
@@ -159,9 +159,9 @@ export const PropertiesPanel = () => {
 
                 {/* Interaction / Link Section */}
                 {selectedNode.id !== 'root' && (
-                    <div className="space-y-3 pb-4 border-b border-slate-100">
+                    <div className="space-y-3 pb-4 border-b border-border">
                         <div className="flex items-center">
-                            <label className="text-xs font-semibold text-slate-700 flex items-center gap-2">
+                            <label className="text-xs font-semibold text-text flex items-center gap-2">
                                 <Link size={14} /> Configuración de Enlace
                             </label>
                             <PropertyHelp title="Interacción" description="Define el destino del clic (Página interna o URL externa)." />
@@ -171,7 +171,7 @@ export const PropertiesPanel = () => {
                             <select
                                 value={selectedNode.interaction?.type || 'none'}
                                 onChange={(e) => updateProperty(selectedId, 'interaction', { ...selectedNode.interaction, type: e.target.value })}
-                                className="w-full p-2 text-sm border border-slate-200 rounded-lg bg-white mb-2"
+                                className="w-full p-2 text-sm border border-border rounded-lg bg-surface-highlight text-text mb-2"
                             >
                                 <option value="none">Ninguna</option>
                                 <option value="link">Ir a Página (Interna)</option>
@@ -184,7 +184,7 @@ export const PropertiesPanel = () => {
                                     <select
                                         value={selectedNode.interaction?.targetPageId || ''}
                                         onChange={(e) => updateProperty(selectedId, 'interaction', { ...selectedNode.interaction, targetPageId: e.target.value })}
-                                        className="w-full p-2 text-sm border border-slate-200 rounded-lg bg-white"
+                                        className="w-full p-2 text-sm border border-border rounded-lg bg-surface-highlight text-text"
                                     >
                                         <option value="">-- Seleccionar --</option>
                                         {pages.map(page => (
@@ -202,7 +202,7 @@ export const PropertiesPanel = () => {
                                         placeholder="https://google.com"
                                         value={selectedNode.interaction?.url || ''}
                                         onChange={(e) => updateProperty(selectedId, 'interaction', { ...selectedNode.interaction, url: e.target.value })}
-                                        className="w-full p-2 text-sm border border-slate-200 rounded-lg"
+                                        className="w-full p-2 text-sm border border-border rounded-lg bg-surface-highlight text-text"
                                     />
                                 </div>
                             )}
@@ -214,7 +214,7 @@ export const PropertiesPanel = () => {
                 {/* Metadata (ID & Class) */}
                 <div className="space-y-3 pb-4 border-b border-slate-100">
                     <div className="flex items-center">
-                        <label className="text-xs font-semibold text-slate-700">
+                        <label className="text-xs font-semibold text-text">
                             {isReact ? 'Props y Atributos' : 'Atributos HTML'}
                         </label>
                         <PropertyHelp title="Identificadores" description="Clases e IDs para estilizado y selección." />
@@ -227,7 +227,7 @@ export const PropertiesPanel = () => {
                                 value={selectedNode.htmlId || ''}
                                 placeholder={selectedNode.id}
                                 onChange={(e) => updateProperty(selectedId, 'htmlId', e.target.value)}
-                                className="w-full p-2 text-xs border border-slate-200 rounded text-slate-600 focus:outline-none focus:border-indigo-500 placeholder:text-slate-300"
+                                className="w-full p-2 text-xs border border-border rounded text-text bg-surface-highlight focus:outline-none focus:border-primary placeholder:text-text-muted"
                             />
                         </div>
                         <div>
@@ -239,7 +239,7 @@ export const PropertiesPanel = () => {
                                 value={selectedNode.className || ''}
                                 onChange={(e) => useEditorStore.getState().updateProperty(selectedId, 'className', e.target.value)}
                                 placeholder={isReact ? "Ej: text-blue-500" : "Ej: mi-clase"}
-                                className="w-full p-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                className="w-full p-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-primary outline-none bg-surface-highlight text-text"
                             />
                         </div>
                     </div>
@@ -248,7 +248,7 @@ export const PropertiesPanel = () => {
                 {/* Background Component Specific Controls */}
                 {selectedNode.type === 'background' && (
                     <div className="space-y-4">
-                        <label className="text-xs font-semibold text-slate-700">Propiedades de Fondo</label>
+                        <label className="text-xs font-semibold text-text">Propiedades de Fondo</label>
 
                         {/* Type Selector */}
                         <div className="flex bg-slate-100 p-1 rounded-lg">
@@ -257,7 +257,7 @@ export const PropertiesPanel = () => {
                                     updateProperty(selectedId, 'backgroundConfig', { ...selectedNode.backgroundConfig, type: 'solid' });
                                     updateStyles(selectedId, { backgroundImage: 'none', backgroundColor: selectedNode.styles.backgroundColor || '#cbd5e1' });
                                 }}
-                                className={clsx("flex-1 text-xs py-1.5 rounded-md transition-all font-medium", (!selectedNode.backgroundConfig?.type || selectedNode.backgroundConfig?.type === 'solid') ? "bg-white shadow-sm text-indigo-600" : "text-slate-500 hover:text-slate-700")}
+                                className={clsx("flex-1 text-xs py-1.5 rounded-md transition-all font-medium", (!selectedNode.backgroundConfig?.type || selectedNode.backgroundConfig?.type === 'solid') ? "bg-surface-highlight shadow-sm text-primary" : "text-text-muted hover:text-text")}
                             >
                                 Sólido
                             </button>
@@ -272,7 +272,7 @@ export const PropertiesPanel = () => {
                                     updateProperty(selectedId, 'backgroundConfig', { ...selectedNode.backgroundConfig, ...newConfig });
                                     updateStyles(selectedId, { backgroundImage: `linear-gradient(${newConfig.direction}deg, ${newConfig.startColor}, ${newConfig.endColor})` });
                                 }}
-                                className={clsx("flex-1 text-xs py-1.5 rounded-md transition-all font-medium", selectedNode.backgroundConfig?.type === 'gradient' ? "bg-white shadow-sm text-indigo-600" : "text-slate-500 hover:text-slate-700")}
+                                className={clsx("flex-1 text-xs py-1.5 rounded-md transition-all font-medium", selectedNode.backgroundConfig?.type === 'gradient' ? "bg-surface-highlight shadow-sm text-primary" : "text-text-muted hover:text-text")}
                             >
                                 Gradiente
                             </button>
@@ -371,7 +371,7 @@ export const PropertiesPanel = () => {
                             <textarea
                                 value={selectedNode.content}
                                 onChange={(e) => updateContent(selectedId, e.target.value)}
-                                className="w-full p-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none h-24"
+                                className="w-full p-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none h-24 bg-surface-highlight text-text"
                             />
                         ) : (
                             <div className="flex flex-col gap-2">
@@ -379,7 +379,7 @@ export const PropertiesPanel = () => {
                                     type="text"
                                     value={selectedNode.content}
                                     onChange={(e) => updateContent(selectedId, e.target.value)}
-                                    className="w-full p-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                                    className="w-full p-2 text-sm border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none bg-surface-highlight text-text"
                                     placeholder={selectedNode.type === 'image' ? (isReact ? "src prop" : "src url") : "video src"}
                                 />
 
@@ -518,7 +518,7 @@ export const PropertiesPanel = () => {
                                                 }
                                             }}
                                         />
-                                        <div className="w-full p-2 text-sm bg-slate-50 border border-slate-200 border-dashed rounded-lg text-slate-500 flex items-center justify-center gap-2 hover:bg-slate-100 transition-colors">
+                                        <div className="w-full p-2 text-sm bg-surface-highlight border border-border border-dashed rounded-lg text-text-muted flex items-center justify-center gap-2 hover:bg-surface-highlight/80 transition-colors">
                                             <Image size={16} />
                                             <span>Subir imagen {isReact ? '(local)' : ''}</span>
                                         </div>
@@ -597,7 +597,7 @@ export const PropertiesPanel = () => {
                                 type="text"
                                 value={!selectedNode.content?.startsWith('<svg') ? selectedNode.content : ''}
                                 onChange={(e) => updateContent(selectedId, e.target.value)}
-                                className="w-full p-2 text-sm border border-slate-200 rounded-lg"
+                                className="w-full p-2 text-sm border border-border rounded-lg bg-surface-highlight text-text"
                                 placeholder="Ej: Star, Home, ShoppingCart..."
                             />
                         </div>
@@ -623,7 +623,7 @@ export const PropertiesPanel = () => {
                             <textarea
                                 value={selectedNode.content?.startsWith('<svg') ? selectedNode.content : ''}
                                 onChange={(e) => updateContent(selectedId, e.target.value)}
-                                className="w-full p-2 text-[10px] font-mono border border-slate-200 rounded-lg h-20"
+                                className="w-full p-2 text-[10px] font-mono border border-border rounded-lg h-20 bg-surface-highlight text-text"
                                 placeholder="<svg ...>...</svg>"
                             />
                             <p className="text-[10px] text-slate-400 mt-1">Pega aquí el código SVG para usar un icono personalizado.</p>
@@ -662,8 +662,8 @@ export const PropertiesPanel = () => {
                                         className={clsx(
                                             "px-3 py-1.5 text-xs rounded border transition-colors flex-1",
                                             selectedNode.styles.gridTemplateColumns?.includes(cols)
-                                                ? "bg-indigo-50 border-indigo-200 text-indigo-700 font-bold"
-                                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                                                ? "bg-primary/20 border-primary text-primary font-bold"
+                                                : "bg-surface-highlight border-border text-text-muted hover:text-text hover:bg-surface-highlight/80"
                                         )}
                                     >
                                         {cols} Cols
@@ -682,7 +682,7 @@ export const PropertiesPanel = () => {
                                 type="datetime-local"
                                 value={selectedNode.targetDate ? selectedNode.targetDate.substring(0, 16) : ''}
                                 onChange={(e) => updateProperty(selectedId, 'targetDate', e.target.value)}
-                                className="w-full p-2 text-sm border border-slate-200 rounded-lg"
+                                className="w-full p-2 text-sm border border-border rounded-lg bg-surface-highlight text-text"
                             />
                         </div>
                     )
@@ -699,7 +699,7 @@ export const PropertiesPanel = () => {
                                         type="text"
                                         value={selectedNode.placeholder || ''}
                                         onChange={(e) => updateProperty(selectedId, 'placeholder', e.target.value)}
-                                        className="w-full p-2 text-sm border border-slate-200 rounded-lg"
+                                        className="w-full p-2 text-sm border border-border rounded-lg bg-surface-highlight text-text"
                                     />
                                 </div>
                                 {selectedNode.type === 'input' && (
@@ -708,7 +708,7 @@ export const PropertiesPanel = () => {
                                         <select
                                             value={selectedNode.inputType || 'text'}
                                             onChange={(e) => updateProperty(selectedId, 'inputType', e.target.value)}
-                                            className="w-full p-2 text-sm border border-slate-200 rounded-lg bg-white"
+                                            className="w-full p-2 text-sm border border-border rounded-lg bg-surface-highlight text-text"
                                         >
                                             <option value="text">Texto</option>
                                             <option value="email">Email</option>
@@ -731,7 +731,7 @@ export const PropertiesPanel = () => {
                                 type="text"
                                 value={selectedNode.content}
                                 onChange={(e) => updateContent(selectedId, e.target.value)}
-                                className="w-full p-2 text-sm border border-slate-200 rounded-lg"
+                                className="w-full p-2 text-sm border border-border rounded-lg bg-surface-highlight text-text"
                             />
                         </div>
                     )
@@ -747,7 +747,7 @@ export const PropertiesPanel = () => {
                                     type="text"
                                     value={selectedNode.href || '#'}
                                     onChange={(e) => updateProperty(selectedId, 'href', e.target.value)}
-                                    className="w-full p-2 text-sm border border-slate-200 rounded-lg"
+                                    className="w-full p-2 text-sm border border-border rounded-lg bg-surface-highlight text-text"
                                 />
                             </div>
                         </div>
@@ -763,7 +763,7 @@ export const PropertiesPanel = () => {
                                 <textarea
                                     value={selectedNode.options || ''}
                                     onChange={(e) => updateProperty(selectedId, 'options', e.target.value)}
-                                    className="w-full p-2 text-sm border border-slate-200 rounded-lg h-20"
+                                    className="w-full p-2 text-sm border border-border rounded-lg h-20 bg-surface-highlight text-text"
                                     placeholder="Opción 1, Opción 2..."
                                 />
                             </div>
@@ -844,7 +844,7 @@ export const PropertiesPanel = () => {
                                     onClick={() => updateProperty(selectedId, 'bgMode', mode)}
                                     className={clsx(
                                         "flex-1 text-[10px] font-medium py-1 rounded capitalize transition-all",
-                                        (selectedNode.bgMode || 'solid') === mode ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                                        (selectedNode.bgMode || 'solid') === mode ? "bg-surface-highlight text-primary shadow-sm" : "text-text-muted hover:text-text"
                                     )}
                                 >
                                     {mode === 'solid' ? 'Sólido' : mode === 'gradient' ? 'Gradiente' : 'Imagen'}
@@ -908,7 +908,7 @@ export const PropertiesPanel = () => {
                                     <input
                                         type="text"
                                         placeholder="https://..."
-                                        className="w-full p-2 text-xs border border-slate-200 rounded"
+                                        className="w-full p-2 text-xs border border-border rounded bg-surface-highlight text-text"
                                         value={selectedNode.styles.backgroundImage?.replace('url("', '').replace('")', '') || ''}
                                         onChange={(e) => handleChangeStyle('backgroundImage', `url("${e.target.value}")`)}
                                     />
@@ -951,7 +951,7 @@ export const PropertiesPanel = () => {
                                         type="text"
                                         value={selectedNode.styles.fontSize || ''}
                                         onChange={(e) => handleChangeStyle('fontSize', e.target.value)}
-                                        className="w-full p-2 text-sm border border-slate-200 rounded-lg"
+                                        className="w-full p-2 text-sm border border-border rounded-lg bg-surface-highlight text-text"
                                     />
                                 </div>
                                 <div>
@@ -979,7 +979,7 @@ export const PropertiesPanel = () => {
                                     <button
                                         key={align}
                                         onClick={() => handleChangeStyle('textAlign', align)}
-                                        className={`flex-1 p-1 rounded flex justify-center ${selectedNode.styles.textAlign === align ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+                                        className={`flex-1 p-1 rounded flex justify-center ${selectedNode.styles.textAlign === align ? 'bg-surface-highlight shadow-sm text-primary' : 'text-text-muted hover:text-text'}`}
                                     >
                                         {align === 'left' && <AlignLeft size={14} />}
                                         {align === 'center' && <AlignCenter size={14} />}
@@ -1024,7 +1024,7 @@ export const PropertiesPanel = () => {
                             <select
                                 value={selectedNode.styles.position || 'static'}
                                 onChange={(e) => handleChangeStyle('position', e.target.value)}
-                                className="w-full p-2 text-sm border border-slate-200 rounded-lg bg-white"
+                                className="w-full p-2 text-sm border border-border rounded-lg bg-surface-highlight text-text"
                             >
                                 <option value="static">Automático (Static)</option>
                                 <option value="relative">Relativo</option>
@@ -1213,7 +1213,7 @@ export const PropertiesPanel = () => {
                                 <PropertyHelp title="Modelo de Caja" description="Ajusta el espacio interno (Padding) y externo (Margin) usando los deslizadores." />
                             </div>
 
-                            <div className="bg-white rounded-lg border border-slate-100 p-3 shadow-sm">
+                            <div className="bg-surface-highlight rounded-lg border border-border p-3 shadow-sm">
                                 <SliderControl
                                     label={isReact ? 'margin' : 'Margen'}
                                     value={selectedNode.styles.margin}
@@ -1253,7 +1253,7 @@ export const PropertiesPanel = () => {
                                 <label className="text-xs font-semibold text-slate-700">Dimensiones</label>
                                 <PropertyHelp title="Tamaño" description="Define el ancho y alto en píxeles." />
                             </div>
-                            <div className="bg-white rounded-lg border border-slate-100 p-3 shadow-sm">
+                            <div className="bg-surface-highlight rounded-lg border border-border p-3 shadow-sm">
                                 <SliderControl
                                     label={isReact ? 'width' : 'Ancho'}
                                     value={selectedNode.styles.width}
@@ -1288,7 +1288,7 @@ export const PropertiesPanel = () => {
                             <select
                                 value={selectedNode.styles.flexDirection || 'column'}
                                 onChange={(e) => handleChangeStyle('flexDirection', e.target.value)}
-                                className="w-full p-2 text-sm border border-slate-200 rounded-lg bg-white"
+                                className="w-full p-2 text-sm border border-border rounded-lg bg-surface-highlight text-text"
                             >
                                 <option value="column">Columna (Vertical)</option>
                                 <option value="row">Fila (Horizontal)</option>
@@ -1396,7 +1396,7 @@ export const PropertiesPanel = () => {
                             <select
                                 value={selectedNode.styles.mixBlendMode || 'normal'}
                                 onChange={(e) => handleChangeStyle('mixBlendMode', e.target.value)}
-                                className="w-full p-2 text-sm border border-slate-200 rounded-lg bg-white"
+                                className="w-full p-2 text-sm border border-border rounded-lg bg-surface-highlight text-text"
                             >
                                 <option value="normal">Normal</option>
                                 <option value="multiply">Multiplicar</option>
@@ -1447,7 +1447,7 @@ export const PropertiesPanel = () => {
                                     handleChangeStyle('WebkitMaskImage', '');
                                 }
                             }}
-                            className="w-full p-2 text-sm border border-slate-200 rounded-lg bg-white"
+                            className="w-full p-2 text-sm border border-border rounded-lg bg-surface-highlight text-text"
                         >
                             <option value="none">Sin Máscara</option>
                             <option value="radial">Desvanecer Bordes</option>
@@ -1510,7 +1510,7 @@ export const PropertiesPanel = () => {
 
                                     updateProperty(selectedId, 'className', newClass.trim());
                                 }}
-                                className="w-full p-2 text-sm border border-slate-200 rounded-lg bg-white outline-none focus:border-indigo-500 transition-colors"
+                                className="w-full p-2 text-sm border border-border rounded-lg bg-surface-highlight text-text outline-none focus:border-primary transition-colors"
                             >
                                 <option value="none">Ninguno</option>
                                 <option value="zoom">Zoom Suave</option>
@@ -1555,7 +1555,7 @@ export const PropertiesPanel = () => {
 
                                     updateProperty(selectedId, 'className', newClass.trim());
                                 }}
-                                className="w-full p-2 text-sm border border-slate-200 rounded-lg bg-white outline-none focus:border-indigo-500 transition-colors"
+                                className="w-full p-2 text-sm border border-border rounded-lg bg-surface-highlight text-text outline-none focus:border-primary transition-colors"
                             >
                                 <option value="none">Ninguno</option>
                                 <option value="clicky">Hundir (Clicky)</option>
@@ -1564,7 +1564,7 @@ export const PropertiesPanel = () => {
                         </div>
 
                         {/* Scroll Reveal */}
-                        <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg border border-slate-100">
+                        <div className="flex items-center justify-between p-2 bg-surface-highlight rounded-lg border border-border">
                             <div className="flex flex-col">
                                 <span className="text-xs font-semibold text-slate-700">Animar al aparecer</span>
                                 <span className="text-[10px] text-slate-400">Efecto de entrada al hacer scroll</span>
