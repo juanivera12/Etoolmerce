@@ -6,13 +6,54 @@ import * as LucideIcons from 'lucide-react';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { ProductCard } from '../shop/ProductCard';
 import { CartWidget } from '../shop/CartWidget';
+import { useCart } from '../../context/CartContext';
+
+
+import AOS from 'aos';
+import 'aos/dist/aos.css';
 
 const ElementWrapper = ({ node, children }) => {
     const { selectedId, selectElement, addElement, moveElement, updateStyles, isPreviewMode, setActivePage } = useEditorStore();
+    const { addToCart } = useCart();
+
+    // Initialize AOS
+    React.useEffect(() => {
+        AOS.init({
+            duration: 1000,
+            once: false,
+            mirror: true
+        });
+    }, []);
+
+    // Refresh AOS when node animation changes or preview mode toggles
+    React.useEffect(() => {
+        if (node.animation) {
+            AOS.refresh();
+        }
+    }, [node.animation, isPreviewMode]);
+
+    // Hover Animation Props (Preview Only)
+    const hoverProps = isPreviewMode ? {
+        whileHover: {
+            scale: node.styles.hoverScale ? parseFloat(node.styles.hoverScale) : 1,
+            filter: node.styles.hoverBrightness ? `brightness(${node.styles.hoverBrightness})` : 'none',
+            zIndex: node.styles.hoverScale ? 100 : undefined
+        },
+        transition: { duration: 0.2 }
+    } : {};
+
+    // AOS Props
+    const aosProps = node.animation?.type ? {
+        'data-aos': node.animation.type,
+        'data-aos-duration': node.animation.duration,
+        'data-aos-delay': node.animation.delay,
+        'data-aos-once': 'false'
+    } : {};
+
     const isSelected = selectedId === node.id && !isPreviewMode;
-    const [dropPosition, setDropPosition] = useState(null); // 'top' | 'bottom' | null
-    const [activeDropZone, setActiveDropZone] = useState(null); // 'left' | 'center' | 'right' | null
-    const nodeRef = useRef(null); // Ref for the wrapper logic
+    const [dropPosition, setDropPosition] = useState(null);
+    const [activeDropZone, setActiveDropZone] = useState(null);
+    const nodeRef = useRef(null);
 
     const handleClick = (e) => {
         if (isPreviewMode) {
@@ -22,6 +63,14 @@ const ElementWrapper = ({ node, children }) => {
                     setActivePage(node.interaction.targetPageId);
                 } else if (node.interaction.type === 'text' || node.interaction.type === 'url') {
                     if (node.interaction.url) window.open(node.interaction.url, '_blank');
+                } else if (node.interaction.type === 'addToCart' && node.interaction.product) {
+                    addToCart(node.interaction.product);
+                    // Visual feedback
+                    const btn = e.currentTarget;
+                    btn.style.transform = "scale(0.95)";
+                    setTimeout(() => btn.style.transform = "scale(1)", 150);
+                    // You might want to show a toast here if available, or just rely on the cart widget updating
+                    console.log("Added to cart:", node.interaction.product);
                 }
             }
             return;
@@ -49,7 +98,7 @@ const ElementWrapper = ({ node, children }) => {
     };
 
     // Only specific types can accept drops (and only in edit mode)
-    const canAcceptDrop = !isPreviewMode && ['section', 'container', 'page', 'header', 'footer', 'hero', 'card', 'newsletter', 'accordion', 'tabs'].includes(node.type);
+    const canAcceptDrop = !isPreviewMode && ['section', 'container', 'page', 'header', 'footer', 'hero', 'card', 'newsletter', 'accordion', 'tabs', 'checkout'].includes(node.type);
 
     const handleDragOver = (e) => {
         e.preventDefault();
@@ -231,14 +280,26 @@ const ElementWrapper = ({ node, children }) => {
     // Check if parent (this node) has free layout to simplify Wrapper rendering for children? 
     // Actually the Wrapper is FOR this node, so we check `node.styles.position` mostly.
 
+    // Force re-render key for test button
+    // User requested: key={component.id + component.animation + Date.now()}
+    // We use JSON.stringify(node.animation) to detect ANY change in animation config
+    const renderKey = node.id + (node.animation ? JSON.stringify(node.animation) : '') + (isPreviewMode ? '-preview' : '-edit');
+
+    const hasAOS = !!node.animation?.type;
+
     return (
         <motion.div
-            layout
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
+            key={renderKey}
+            layout={!hasAOS}
+            initial={hasAOS ? undefined : { opacity: 0, scale: 0.9 }}
+            animate={hasAOS ? undefined : { opacity: 1, scale: 1 }}
+            exit={hasAOS ? undefined : { opacity: 0, scale: 0.9 }}
             transition={{ duration: 0.2 }}
+            {...hoverProps}
+            {...aosProps}
             ref={nodeRef}
+
+
             draggable={!isPreviewMode}
             onDragStart={handleDragStart}
             onClick={handleClick}
@@ -247,6 +308,7 @@ const ElementWrapper = ({ node, children }) => {
             onDrop={handleDrop}
             className={clsx(
                 "relative transition-all duration-200",
+                "aos-animate", // Force class for AOS detection
                 !isPreviewMode && "cursor-pointer",
                 isSelected ? "ring-2 ring-indigo-500 ring-offset-2 z-10" : (!isPreviewMode && "hover:ring-1 hover:ring-indigo-300 hover:z-10"),
                 canAcceptDrop && "hover:bg-slate-50/50", // Visual hint for drop zones
@@ -301,8 +363,8 @@ const ElementWrapper = ({ node, children }) => {
 export const Renderer = ({ node }) => {
     if (!node) return null;
 
-    // We need to access store for the root page drop handler
-    const { addElement } = useEditorStore();
+    // We need to access store for the root page drop handler and preview mode
+    const { addElement, isPreviewMode } = useEditorStore();
 
     const renderChildren = () => {
         return node.children?.map((child) => (
@@ -589,7 +651,7 @@ export const Renderer = ({ node }) => {
                         <span className="text-[10px] uppercase font-bold tracking-wider">Click o Arrastra Imagen</span>
                     </div>
                 ) : (
-                    <img src={node.content} alt="Element" style={{ width: '100%', height: '100%', maxWidth: '100%', objectFit: 'contain', borderRadius: 'inherit', pointerEvents: 'none' }} />
+                    <img src={node.content} alt="Element" style={{ width: '100%', height: '100%', maxWidth: '100%', objectFit: node.styles.objectFit || 'contain', borderRadius: 'inherit', pointerEvents: 'none' }} />
                 )}
             </ElementWrapper>
         )
@@ -622,11 +684,18 @@ export const Renderer = ({ node }) => {
                 ) : (
                     <video
                         src={node.content}
-                        controls={node.styles.controls !== false}
+                        controls={node.styles.controls !== false && !(node.styles.pointerEvents === 'none')}
                         autoPlay={node.styles.autoPlay}
                         loop={node.styles.loop}
                         muted={node.styles.muted}
-                        style={{ width: '100%', height: '100%', maxWidth: '100%', objectFit: 'cover', borderRadius: 'inherit', pointerEvents: 'none' }}
+                        style={{
+                            width: '100%',
+                            height: '100%',
+                            maxWidth: '100%',
+                            objectFit: node.styles.objectFit || 'cover',
+                            borderRadius: 'inherit',
+                            pointerEvents: node.styles.pointerEvents || (isPreviewMode ? 'auto' : 'none')
+                        }}
                     />
                 )}
             </ElementWrapper>
@@ -747,6 +816,53 @@ export const Renderer = ({ node }) => {
         return (
             <ElementWrapper node={node}>
                 <CartWidget node={node} />
+            </ElementWrapper>
+        );
+    }
+
+    if (node.type === 'checkout') {
+        const { cartTotal, formatCurrency } = useCart();
+        const isDisabled = cartTotal === 0;
+
+        // Custom Render to inject Dynamic Data
+        // Reconstruct the children manually to keep styles but swap content
+        const titleNode = node.children?.[0];
+        const summaryNode = node.children?.[1];
+        const btnNode = node.children?.[2];
+        const secureNode = node.children?.[3];
+
+        return (
+            <ElementWrapper node={node}>
+                <div style={{ ...node.styles, height: 'auto', minHeight: 'auto' }}> {/* Ensure flexible container */}
+                    {/* Title */}
+                    <div style={{ ...titleNode?.styles, width: '100%', textAlign: 'center' }}>
+                        {titleNode?.content || node.children.find(c => c.id.includes('title'))?.content || 'Finalizar Compra'}
+                    </div>
+
+                    {/* Dynamic Summary */}
+                    <div style={{ ...summaryNode?.styles, width: '100%', textAlign: 'center' }}>
+                        Total a pagar: <span className="font-bold">{formatCurrency(cartTotal)}</span>
+                    </div>
+
+                    {/* Checkout Button */}
+                    <button
+                        disabled={isDisabled}
+                        style={{
+                            ...btnNode?.styles,
+                            opacity: isDisabled ? 0.5 : 1,
+                            cursor: isDisabled ? 'not-allowed' : 'pointer',
+                            pointerEvents: isDisabled ? 'none' : 'auto'
+                        }}
+                        className="transition-all active:scale-95"
+                    >
+                        {btnNode?.content || 'Pagar con Mercado Pago'}
+                    </button>
+
+                    {/* Secure Text */}
+                    <div style={{ ...secureNode?.styles, justifyContent: 'center', width: '100%' }}>
+                        {secureNode?.content || 'Pago procesado de forma segura'}
+                    </div>
+                </div>
             </ElementWrapper>
         );
     }

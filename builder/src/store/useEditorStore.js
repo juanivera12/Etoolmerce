@@ -6,7 +6,7 @@ const createPage = (name, isHome = false) => ({
     name: name,
     slug: isHome ? 'index' : name.toLowerCase().replace(/\s+/g, '-'),
     content: {
-        id: isHome ? "root" : `root-${Date.now()}`, 
+        id: isHome ? "root" : `root-${Date.now()}`,
         type: "page",
         styles: {
             backgroundColor: "#121212",
@@ -98,13 +98,13 @@ const initialHome = createPage("Inicio", true);
 const createNode = (type, customStyles = {}) => {
     const id = `${type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    
+
     const baseStyles = {
         position: 'relative',
         zIndex: '10'
     };
 
-    
+
     let node = {
         id,
         type,
@@ -118,14 +118,14 @@ const createNode = (type, customStyles = {}) => {
     };
 
     switch (type) {
-        
+
         case 'header':
             return {
                 id, type,
                 content: "Tu E-commerce",
                 className: "bg-surface text-text border-b border-border",
                 styles: {
-                    backgroundColor: "#1E1E1E", 
+                    backgroundColor: "#1E1E1E",
                     color: "#FFFFFF",
                     padding: "16px 32px",
                     display: "flex",
@@ -142,8 +142,8 @@ const createNode = (type, customStyles = {}) => {
                         type: "container",
                         styles: { display: "flex", alignItems: "center", gap: "10px", backgroundColor: "transparent" },
                         children: [
-                            
-                            { id: `${id}-logo-icon`, type: "icon", content: "Store", styles: { fontSize: "24px", color: "#FFD700" } }, 
+
+                            { id: `${id}-logo-icon`, type: "icon", content: "Store", styles: { fontSize: "24px", color: "#FFD700" } },
                             { id: `${id}-logo-text`, type: "text", content: "Tu E-commerce", styles: { fontSize: "20px", fontWeight: "bold", color: "#FFFFFF" } }
                         ]
                     },
@@ -245,7 +245,7 @@ const createNode = (type, customStyles = {}) => {
                     ...customStyles
                 },
                 children: [
-                    
+
                     {
                         id: `${id}-cols`, type: 'container',
                         styles: {
@@ -257,7 +257,7 @@ const createNode = (type, customStyles = {}) => {
                             gap: '40px'
                         },
                         children: [
-                            
+
                             {
                                 id: `${id}-c1`, type: 'container', styles: { display: 'flex', flexDirection: 'column', gap: '12px' }, children: [
                                     { id: `${id}-c1-1`, type: 'text', content: 'BUSCAR TIENDA', styles: { fontSize: '14px', fontWeight: '800', cursor: 'pointer' } },
@@ -265,7 +265,7 @@ const createNode = (type, customStyles = {}) => {
                                     { id: `${id}-c1-3`, type: 'text', content: 'ENVÍO', styles: { fontSize: '14px', fontWeight: '800', cursor: 'pointer' } }
                                 ]
                             },
-                            
+
                             {
                                 id: `${id}-c2`, type: 'container', styles: { display: 'flex', flexDirection: 'column', gap: '12px' }, children: [
                                     { id: `${id}-c2-h`, type: 'text', content: 'AYUDA', styles: { fontSize: '14px', fontWeight: '800', marginBottom: '4px' } },
@@ -274,7 +274,7 @@ const createNode = (type, customStyles = {}) => {
                                     { id: `${id}-c2-3`, type: 'text', content: 'Contacto', styles: { fontSize: '12px', color: '#7e7e7e', cursor: 'pointer' } }
                                 ]
                             },
-                            
+
                             {
                                 id: `${id}-c3`, type: 'container', styles: { display: 'flex', flexDirection: 'column', gap: '12px' }, children: [
                                     { id: `${id}-c3-h`, type: 'text', content: 'ACERCA DE', styles: { fontSize: '14px', fontWeight: '800', marginBottom: '4px' } },
@@ -283,7 +283,7 @@ const createNode = (type, customStyles = {}) => {
                                     { id: `${id}-c3-3`, type: 'text', content: 'Sustentabilidad', styles: { fontSize: '12px', color: '#7e7e7e', cursor: 'pointer' } }
                                 ]
                             },
-                            
+
                             {
                                 id: `${id}-soc`, type: 'container', styles: { display: 'flex', gap: '16px' }, children: [
                                     { id: `${id}-s1`, type: 'icon', content: 'Twitter', styles: { color: '#7e7e7e', cursor: 'pointer' } },
@@ -294,7 +294,7 @@ const createNode = (type, customStyles = {}) => {
                             }
                         ]
                     },
-                    
+
                     {
                         id: `${id}-legal`, type: 'container',
                         styles: {
@@ -361,7 +361,7 @@ const createNode = (type, customStyles = {}) => {
             return {
                 id,
                 type,
-                content: "https://www.w3schools.com/html/mov_bbb.mp4", 
+                content: "https://www.w3schools.com/html/mov_bbb.mp4",
                 children: [],
                 ...restProps,
                 styles: {
@@ -441,7 +441,7 @@ const createNode = (type, customStyles = {}) => {
                     },
                     {
                         id: `${id}-btn`,
-                        type: 'text', 
+                        type: 'text',
                         content: "Comprar Ahora",
                         styles: {
                             padding: "12px 32px",
@@ -492,7 +492,7 @@ const createNode = (type, customStyles = {}) => {
                     }
                 ]
             };
-        
+
         case 'spacer':
             return {
                 id, type,
@@ -502,13 +502,13 @@ const createNode = (type, customStyles = {}) => {
             const { styles: passedStyles = {}, ...restProps } = customStyles;
             return {
                 id, type,
-                content: 'Star', 
-                ...restProps, 
+                content: 'Star',
+                ...restProps,
                 styles: {
                     fontSize: '24px',
                     color: '#64748b',
                     display: 'inline-block',
-                    width: '48px', 
+                    width: '48px',
                     height: '48px',
                     ...baseStyles,
                     ...passedStyles
@@ -622,15 +622,76 @@ const createNode = (type, customStyles = {}) => {
                     }
                 ]
             };
+        case 'checkout':
+            return {
+                id,
+                type,
+                styles: {
+                    padding: "20px",
+                    backgroundColor: "#f8fafc",
+                    borderRadius: "12px",
+                    border: "1px solid #e2e8f0",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "16px",
+                    width: "100%",
+                    maxWidth: "400px",
+                    margin: "0 auto",
+                    ...baseStyles,
+                    ...customStyles
+                },
+                mercadoPago: {
+                    publicKey: '',
+                    accessToken: '',
+                    autoRedirect: false
+                },
+                children: [
+                    {
+                        id: `${id}-title`,
+                        type: 'text',
+                        content: "Finalizar Compra",
+                        styles: { fontSize: "20px", fontWeight: "bold", color: "#0f172a" }
+                    },
+                    {
+                        id: `${id}-summary`,
+                        type: 'text',
+                        content: "Total a pagar: $120.00",
+                        styles: { fontSize: "16px", color: "#64748b", marginBottom: "8px" }
+                    },
+                    {
+                        id: `${id}-btn`,
+                        type: 'button',
+                        content: "Pagar con Mercado Pago",
+                        styles: {
+                            padding: "12px 24px",
+                            backgroundColor: "#009ee3", // MP Blue
+                            color: "white",
+                            borderRadius: "6px",
+                            fontWeight: "600",
+                            width: "100%",
+                            cursor: "pointer",
+                            border: "none",
+                            fontSize: "16px"
+                        }
+                    },
+                    {
+                        id: `${id}-secure`,
+                        type: 'text',
+                        content: "Pago procesado de forma segura",
+                        styles: { fontSize: "11px", color: "#94a3b8", display: "flex", alignItems: "center", gap: "4px" }
+                    }
+                ]
+            };
         case 'cartWidget':
             return {
                 id, type,
                 styles: {
                     position: 'relative', display: 'flex', alignItems: 'center', zIndex: '40',
-                    ...baseStyles, zIndex: '40' 
+                    ...baseStyles, zIndex: '40'
                 },
                 children: [
-                    
+
                     {
                         id: `${id}-btn`, type: 'container',
                         styles: {
@@ -655,7 +716,7 @@ const createNode = (type, customStyles = {}) => {
                             }
                         ]
                     },
-                    
+
                     {
                         id: `${id}-dropdown`, type: 'container',
                         styles: {
@@ -667,7 +728,7 @@ const createNode = (type, customStyles = {}) => {
                         },
                         children: [
                             { id: `${id}-d-title`, type: 'text', content: 'Tu Carrito', styles: { fontSize: '16px', fontWeight: 'bold', color: '#0f172a', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' } },
-                            
+
                             {
                                 id: `${id}-it1`, type: 'container',
                                 styles: { display: 'flex', gap: '12px', alignItems: 'center', padding: 0, border: 'none', background: 'transparent' },
@@ -683,7 +744,7 @@ const createNode = (type, customStyles = {}) => {
                                     }
                                 ]
                             },
-                            
+
                             {
                                 id: `${id}-it2`, type: 'container',
                                 styles: { display: 'flex', gap: '12px', alignItems: 'center', padding: 0, border: 'none', background: 'transparent' },
@@ -738,7 +799,7 @@ const createNode = (type, customStyles = {}) => {
                             }
                         ]
                     },
-                    
+
                     {
                         id: `${id}-results`, type: 'container',
                         styles: {
@@ -908,7 +969,7 @@ const createNode = (type, customStyles = {}) => {
                     display: 'flex', flexDirection: 'column', gap: '24px',
                     backgroundColor: 'white', width: '320px', alignItems: 'center',
                     boxShadow: '0 10px 40px -10px rgba(0,0,0,0.08)', transition: 'transform 0.3s ease',
-                    color: '#0f172a' 
+                    color: '#0f172a'
                 },
                 children: [
                     { id: `${id}-plan`, type: 'text', content: 'Pro', styles: { fontSize: '18px', fontWeight: '600', color: '#6366f1' } },
@@ -972,7 +1033,7 @@ const createNode = (type, customStyles = {}) => {
                 id,
                 type,
                 styles: {
-                    order: '-9999', 
+                    order: '-9999',
                     width: '100%',
                     padding: "20px 40px",
                     display: "flex",
@@ -986,7 +1047,7 @@ const createNode = (type, customStyles = {}) => {
                     ...customStyles
                 },
                 children: [
-                    
+
                     {
                         id: `${id}-brand`,
                         type: 'container',
@@ -995,7 +1056,7 @@ const createNode = (type, customStyles = {}) => {
                             {
                                 id: `${id}-logo`,
                                 type: 'image',
-                                content: "", 
+                                content: "",
                                 styles: { width: "40px", height: "40px", objectFit: "contain" }
                             },
                             {
@@ -1006,7 +1067,7 @@ const createNode = (type, customStyles = {}) => {
                             }
                         ]
                     },
-                    
+
                     {
                         id: `${id}-nav`,
                         type: 'container',
@@ -1017,14 +1078,14 @@ const createNode = (type, customStyles = {}) => {
                             { id: `${id}-l3`, type: 'text', content: "Sobre Nosotros", styles: { fontSize: "15px", fontWeight: "500", color: "#64748b", cursor: 'pointer', transition: 'color 0.2s', ':hover': { color: '#4f46e5' } } }
                         ]
                     },
-                    
+
                     {
                         id: `${id}-bgr`,
                         type: 'icon',
                         content: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`,
                         styles: { cursor: 'pointer', display: 'none', '@media (max-width: 768px)': { display: 'block' }, color: '#1e293b' }
                     },
-                    
+
                     {
                         id: `${id}-mob`,
                         type: 'container',
@@ -1043,7 +1104,7 @@ const createNode = (type, customStyles = {}) => {
                 ]
             };
 
-        
+
         case 'form':
             return {
                 id,
@@ -1131,7 +1192,7 @@ const createNode = (type, customStyles = {}) => {
             return {
                 id,
                 type,
-                content: 'Opción', 
+                content: 'Opción',
                 checked: false,
                 styles: {
                     display: 'flex',
@@ -1158,7 +1219,7 @@ const createNode = (type, customStyles = {}) => {
                 }
             };
 
-        
+
         case 'link':
             return {
                 id,
@@ -1190,7 +1251,7 @@ const createNode = (type, customStyles = {}) => {
                 id,
                 type,
                 styles: {
-                    order: '-9999', 
+                    order: '-9999',
                     width: '100%',
                     padding: '16px 40px',
                     display: 'flex',
@@ -1239,7 +1300,7 @@ const createNode = (type, customStyles = {}) => {
                 type,
                 styles: {
                     order: '9999',
-                    marginTop: 'auto', 
+                    marginTop: 'auto',
                     width: '100%',
                     backgroundColor: '#111111',
                     color: '#ffffff',
@@ -1250,7 +1311,7 @@ const createNode = (type, customStyles = {}) => {
                     ...customStyles
                 },
                 children: [
-                    
+
                     {
                         id: `${id}-top`,
                         type: 'container',
@@ -1268,7 +1329,7 @@ const createNode = (type, customStyles = {}) => {
                             alignItems: 'flex-start'
                         },
                         children: [
-                            
+
                             {
                                 id: `${id}-c1`,
                                 type: 'container',
@@ -1279,7 +1340,7 @@ const createNode = (type, customStyles = {}) => {
                                     { id: `${id}-a3`, type: 'text', content: 'DESCUENTOS', styles: { fontSize: '14px', fontWeight: '800', color: '#ffffff', cursor: 'pointer', textTransform: 'uppercase', fontFamily: 'Inter, sans-serif' } },
                                 ]
                             },
-                            
+
                             {
                                 id: `${id}-c2`,
                                 type: 'container',
@@ -1292,7 +1353,7 @@ const createNode = (type, customStyles = {}) => {
                                     { id: `${id}-l4`, type: 'text', content: 'Contacto', styles: { fontSize: '12px', color: '#9ca3af', cursor: 'pointer', fontWeight: '500' } },
                                 ]
                             },
-                            
+
                             {
                                 id: `${id}-c3`,
                                 type: 'container',
@@ -1304,7 +1365,7 @@ const createNode = (type, customStyles = {}) => {
                                     { id: `${id}-l7`, type: 'text', content: 'Sustentabilidad', styles: { fontSize: '12px', color: '#9ca3af', cursor: 'pointer', fontWeight: '500' } },
                                 ]
                             },
-                            
+
                             {
                                 id: `${id}-c4`,
                                 type: 'container',
@@ -1315,7 +1376,7 @@ const createNode = (type, customStyles = {}) => {
                                     { id: `${id}-l9`, type: 'text', content: 'Eventos', styles: { fontSize: '12px', color: '#9ca3af', cursor: 'pointer', fontWeight: '500' } },
                                 ]
                             },
-                            
+
                             {
                                 id: `${id}-c5`,
                                 type: 'container',
@@ -1329,7 +1390,7 @@ const createNode = (type, customStyles = {}) => {
                             }
                         ]
                     },
-                    
+
                     {
                         id: `${id}-bottom`,
                         type: 'container',
@@ -1347,7 +1408,7 @@ const createNode = (type, customStyles = {}) => {
                             gap: '20px'
                         },
                         children: [
-                            
+
                             {
                                 id: `${id}-legal-l`,
                                 type: 'container',
@@ -1365,7 +1426,7 @@ const createNode = (type, customStyles = {}) => {
                                     { id: `${id}-copy`, type: 'text', content: '© 2026 Mi E-Commerce. Todos los derechos reservados.', styles: { fontSize: '11px', color: '#6b7280' } }
                                 ]
                             },
-                            
+
                             {
                                 id: `${id}-legal-r`,
                                 type: 'container',
@@ -1413,27 +1474,27 @@ export const useEditorStore = create((set, get) => ({
 
     selectedId: null,
     isPreviewMode: false,
-    viewMode: 'desktop', 
+    viewMode: 'desktop',
     isTutorialActive: false,
 
     setViewMode: (mode) => set({ viewMode: mode }),
 
-    
+
     projectConfig: {
-        targetFramework: 'html', 
+        targetFramework: 'html',
     },
 
     setProjectConfig: (config) => set((state) => ({
         projectConfig: { ...state.projectConfig, ...config }
     })),
 
-    
+
 
     addPage: (name) => set((state) => {
         const newPage = createPage(name);
         return {
             pages: [...state.pages, newPage],
-            activePageId: newPage.id, 
+            activePageId: newPage.id,
             selectedId: null
         };
     }),
@@ -1441,7 +1502,7 @@ export const useEditorStore = create((set, get) => ({
     setActivePage: (pageId) => set({ activePageId: pageId, selectedId: null }),
 
     deletePage: (pageId) => set((state) => {
-        if (state.pages.length <= 1) return state; 
+        if (state.pages.length <= 1) return state;
         const newPages = state.pages.filter(p => p.id !== pageId);
         return {
             pages: newPages,
@@ -1455,7 +1516,7 @@ export const useEditorStore = create((set, get) => ({
     })),
 
 
-    
+
 
     selectElement: (id) => set({ selectedId: id }),
     togglePreview: () => set((state) => ({ isPreviewMode: !state.isPreviewMode })),
@@ -1534,7 +1595,7 @@ export const useEditorStore = create((set, get) => ({
         const activePage = state.pages.find(p => p.id === state.activePageId);
         if (!activePage) return state;
 
-        
+
         let targetId = parentId;
         if (type === 'header' || type === 'footer') {
             targetId = activePage.content.id;
@@ -1548,15 +1609,15 @@ export const useEditorStore = create((set, get) => ({
             let newChildren = [...(node.children || [])];
 
             if (type === 'header') {
-                
-                
+
+
                 newChildren.unshift(newNode);
             } else if (type === 'footer') {
-                
+
                 newChildren.push(newNode);
             } else {
-                
-                
+
+
                 const footerIndex = newChildren.findIndex(c => c.type === 'footer');
                 if (footerIndex !== -1) {
                     newChildren.splice(footerIndex, 0, newNode);
@@ -1600,7 +1661,7 @@ export const useEditorStore = create((set, get) => ({
         const activePage = state.pages.find(p => p.id === state.activePageId);
         if (!activePage) return state;
 
-        
+
         const findNodeAndParent = (node, id, parent = null) => {
             if (node.id === id) return { node, parent };
             if (node.children) {
@@ -1621,12 +1682,12 @@ export const useEditorStore = create((set, get) => ({
         const { node: draggedNode, parent: oldParent } = draggedData;
         const { node: targetNode, parent: targetParent } = targetData;
 
-        
-        
-        
+
+
+
         const clonedContent = JSON.parse(JSON.stringify(activePage.content));
 
-        
+
         const findInClone = (node, id) => {
             if (node.id === id) return node;
             if (node.children) {
@@ -1653,19 +1714,19 @@ export const useEditorStore = create((set, get) => ({
 
         if (!draggedNodeClone || !oldParentClone) return state;
 
-        
+
         oldParentClone.children = oldParentClone.children.filter(c => c.id !== draggedId);
 
-        
-        
 
-        
-        
-        
-        
-        
-        
-        
+
+
+
+
+
+
+
+
+
 
         if (position === 'inside') {
             const newParentClone = findInClone(clonedContent, targetId);
@@ -1674,10 +1735,10 @@ export const useEditorStore = create((set, get) => ({
                 newParentClone.children.push(draggedNodeClone);
             }
         } else {
-            
-            
-            
-            
+
+
+
+
             const newParentClone = findParentInClone(clonedContent, targetId);
             if (newParentClone) {
                 const targetIndex = newParentClone.children.findIndex(c => c.id === targetId);
@@ -1691,10 +1752,10 @@ export const useEditorStore = create((set, get) => ({
         };
     }),
 
-    
+
     reparentElement: (draggedId, newParentId) => get().moveElement(draggedId, newParentId, 'inside'),
 
-    
+
     past: [],
     future: [],
     clipboard: null,
@@ -1702,7 +1763,7 @@ export const useEditorStore = create((set, get) => ({
     addToHistory: () => {
         set((state) => {
             const currentContent = JSON.parse(JSON.stringify(state.pages.find(p => p.id === state.activePageId).content));
-            
+
             const newPast = [...state.past, currentContent].slice(-50);
             return {
                 past: newPast,
@@ -1717,8 +1778,8 @@ export const useEditorStore = create((set, get) => ({
             const previous = state.past[state.past.length - 1];
             const newPast = state.past.slice(0, -1);
 
-            
-            
+
+
             const current = JSON.parse(JSON.stringify(state.pages.find(p => p.id === state.activePageId).content));
 
             const updatedPages = state.pages.map(p => p.id === state.activePageId ? { ...p, content: previous } : p);
@@ -1755,7 +1816,7 @@ export const useEditorStore = create((set, get) => ({
         const state = get();
         if (!state.selectedId) return;
 
-        
+
         const findNode = (node, id) => {
             if (node.id === id) return node;
             if (node.children) {
@@ -1785,14 +1846,14 @@ export const useEditorStore = create((set, get) => ({
             const newNode = { ...node };
             newNode.id = `${newNode.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             if (newNode.children) {
-                newNode.children = newNode.children.map(regenerateIds); 
+                newNode.children = newNode.children.map(regenerateIds);
             }
             return newNode;
         };
 
         const clonedNode = regenerateIds(state.clipboard);
 
-        
+
         if (clonedNode.styles?.position === 'absolute') {
             const oldLeft = parseFloat(clonedNode.styles.left) || 0;
             const oldTop = parseFloat(clonedNode.styles.top) || 0;
@@ -1800,8 +1861,8 @@ export const useEditorStore = create((set, get) => ({
             clonedNode.styles.top = `${oldTop + 20}px`;
         }
 
-        
-        
+
+
 
         const activePage = state.pages.find(p => p.id === state.activePageId);
 
@@ -1815,4 +1876,26 @@ export const useEditorStore = create((set, get) => ({
             selectedId: clonedNode.id
         });
     },
+
+    loadTemplate: (templateContent) => set((state) => {
+        get().addToHistory();
+        const activePage = state.pages.find(p => p.id === state.activePageId);
+        if (!activePage) return state;
+
+        const regenerateIds = (node) => {
+            const newNode = { ...node };
+            newNode.id = `${newNode.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            if (newNode.children) {
+                newNode.children = newNode.children.map(regenerateIds);
+            }
+            return newNode;
+        };
+
+        const newContent = regenerateIds(templateContent);
+
+        return {
+            pages: state.pages.map(p => p.id === state.activePageId ? { ...p, content: newContent } : p),
+            selectedId: null
+        };
+    }),
 }));

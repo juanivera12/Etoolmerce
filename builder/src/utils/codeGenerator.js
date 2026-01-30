@@ -107,8 +107,16 @@ const generateNodeHTML = (node, pages, classMap) => {
         tagName = 'section';
     }
 
+    // Animation Attributes (AOS)
+    let animationAttrs = '';
+    if (node.animation && node.animation.type) {
+        animationAttrs = ` data-aos="${node.animation.type}"`;
+        if (node.animation.duration) animationAttrs += ` data-aos-duration="${node.animation.duration}"`;
+        if (node.animation.delay) animationAttrs += ` data-aos-delay="${node.animation.delay}"`;
+    }
+
     // Attributes
-    attrs = `class="${className}"${idAttr}${href}`;
+    attrs = `class="${className}"${idAttr}${href}${animationAttrs}`;
 
     // Content
     if (node.type === 'image') {
@@ -138,6 +146,19 @@ const generateNodeHTML = (node, pages, classMap) => {
     return `<${tagName} ${attrs}>
 ${childrenHtml}
 </${tagName}>`;
+};
+
+// HELPER: Find MP Config
+const findMPConfig = (pages) => {
+    let config = null;
+    const traverse = (node) => {
+        if (node.mercadoPago && node.mercadoPago.publicKey) {
+            config = node.mercadoPago;
+        }
+        if (node.children) node.children.forEach(traverse);
+    };
+    pages.forEach(p => traverse(p.content));
+    return config;
 };
 
 const extractScripts = (node, scriptList) => {
@@ -293,6 +314,37 @@ const extractScripts = (node, scriptList) => {
         `);
     }
 
+    if (node.type === 'checkout') {
+        const btnId = `${node.id}-btn`;
+        scriptList.push(`
+            // Mercado Pago Checkout Logic for ${node.id}
+            const mpBtn_${node.id} = document.getElementById('${btnId}');
+            if(mpBtn_${node.id} && window.MercadoPago) {
+                // Initialize MP
+                // Assumes Global Config from config.js
+                const mp = new MercadoPago(window.MP_PUBLIC_KEY, {
+                    locale: 'es-AR' // Adjust as needed
+                });
+
+                mpBtn_${node.id}.addEventListener('click', () => {
+                   // Mock Preference Creation (Backend usually does this)
+                   // For Frontend-only visual demo or simple integrations:
+                   const checkout = mp.checkout({
+                       preference: {
+                           id: 'YOUR_PREFERENCE_ID' // Requires Backend
+                       }
+                   });
+                   
+                   // For this Builder Demo: Just alert or redirect to sandbox if no backend
+                   alert('Iniciando pago con Mercado Pago... (Requiere Backend para Preference ID)');
+                   console.log('Token:', window.MP_ACCESS_TOKEN); // Debug only
+                   
+                   // checkout.open();
+                });
+            }
+        `);
+    }
+
     // Check for newsletter input/button if applicable in specific structures
     // Assuming generic newsletter with button type='button' inside acting as submit
 
@@ -423,6 +475,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
   </body>
 </html>`);
 
@@ -442,7 +495,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             "react-dom": "^18.2.0",
             "lucide-react": "^0.292.0",
             "clsx": "^2.0.0",
-            "tailwind-merge": "^2.0.0"
+            "tailwind-merge": "^2.0.0",
+            "aos": "^2.3.4"
         },
         "devDependencies": {
             "@types/react": "^18.2.37",
@@ -492,7 +546,16 @@ ${Array.from(cssMap.values()).join('\n\n')}
 `;
     zip.file("src/index.css", styles);
 
-    // 6. Generate Simple App.jsx (Routing Placeholder or Single Page)
+    // 6. Config File
+    const mpConfig = findMPConfig(pages);
+    if (mpConfig) {
+        zip.file("src/config.js", `export const MP_CONFIG = {
+    PUBLIC_KEY: "${mpConfig.publicKey}",
+    ACCESS_TOKEN: "${mpConfig.accessToken}"
+};`);
+    }
+
+    // 7. App.jsx (Updated to import config)
     // For simplicity, we render the first page or a router.
     // Let's generate a Router-like structure if multiple pages, or just Home.
 
@@ -516,11 +579,20 @@ ${Array.from(cssMap.values()).join('\n\n')}
     bodyContent = bodyContent.replace(/<img ([^>]+)>/g, '<img $1 />'); // Self-closing img
     // Note: Style strings are CSS classes, so no inline style object issues usually.
 
-    zip.file("src/App.jsx", `import React from 'react';
+    zip.file("src/App.jsx", `import React, { useEffect } from 'react';
 import { useCart } from './context/CartContext';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
 
 function App() {
   const { addToCart } = useCart(); // Example usage available
+
+  useEffect(() => {
+    AOS.init({
+      duration: 1000,
+      once: true,
+    });
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">
@@ -571,20 +643,67 @@ export const generateProfessionalCode = (pages) => {
     // 4. HTML Content
     pages.forEach(page => {
         const bodyContent = generateNodeHTML(page.content, pages, classMap);
+
+        // Calculate used fonts
+        const usedFonts = new Set();
+        const traverseForFonts = (node) => {
+            if (node.styles?.fontFamily) {
+                // Extract font name, removing generic fallback
+                const family = node.styles.fontFamily.split(',')[0].replace(/['"]/g, '').trim();
+                // Exclude common web safe fonts if desire, or just check if it's not a generic name
+                if (!['Arial', 'Helvetica', 'Times New Roman', 'Courier New', 'Verdana', 'Georgia', 'Palatino', 'Garamond', 'Bookman', 'Comic Sans MS', 'Trebuchet MS', 'Arial Black', 'Impact'].includes(family) && !family.includes('sans-serif') && !family.includes('serif')) {
+                    usedFonts.add(family);
+                }
+            }
+            if (node.children) node.children.forEach(traverseForFonts);
+        };
+        traverseForFonts(page.content);
+
+        let googleFontsLink = '';
+        if (usedFonts.size > 0) {
+            const fontQuery = Array.from(usedFonts)
+                .map(font => `family=${font.replace(/\s+/g, '+')}:wght@300;400;500;600;700`)
+                .join('&');
+            googleFontsLink = `<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?${fontQuery}&display=swap" rel="stylesheet">`;
+        }
+
         files[`${page.slug}.html`] = `<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${page.name}</title>
+    ${googleFontsLink}
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
 </head>
 <body>
 ${bodyContent}
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+      AOS.init();
+    </script>
     <script src="js/script.js"></script>
 </body>
 </html>`;
     });
+
+    // 5. Config JS
+    const mpConfig = findMPConfig(pages);
+    if (mpConfig) {
+        files['js/config.js'] = `window.MP_PUBLIC_KEY = "${mpConfig.publicKey}";
+window.MP_ACCESS_TOKEN = "${mpConfig.accessToken}";`;
+
+        // Add to HTML script include
+        Object.keys(files).forEach(key => {
+            if (key.endsWith('.html')) {
+                files[key] = files[key].replace('<script src="js/script.js"></script>', '<script src="js/config.js"></script>\n    <script src="js/script.js"></script>');
+            }
+        });
+    }
 
     return files;
 };

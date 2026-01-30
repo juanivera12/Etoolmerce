@@ -54,10 +54,11 @@ function App() {
               "bg-background rounded-sm min-h-[800px] transition-all duration-300 origin-top ease-in-out relative overflow-hidden",
               // Premium Shadow: 0 20px 50px -12px rgba(0,0,0,0.12)
               "shadow-[0_20px_50px_-12px_rgba(0,0,0,0.12)]",
-              isPreviewMode ? "w-full h-full max-w-none" :
-                viewMode === 'mobile' ? "w-[375px]" :
-                  viewMode === 'tablet' ? "w-[768px]" :
-                    "w-full max-w-[1200px]" // Desktop
+              // Responsive logic: Respect mobile/tablet widths even in Preview Mode
+              viewMode === 'mobile' ? "w-[375px]" :
+                viewMode === 'tablet' ? "w-[768px]" :
+                  // Desktop: Full width in preview, constrained in editor
+                  isPreviewMode ? "w-full h-full max-w-none" : "w-full max-w-[1200px]"
             )}
             id="canvas-area"
           >
@@ -72,17 +73,6 @@ function App() {
           </>
         )}
 
-        {/* Floating Controls for Preview Mode */}
-        {isPreviewMode && (
-          <div className="absolute top-4 right-4 z-50 flex gap-2">
-            <button
-              onClick={togglePreview}
-              className="px-4 py-2 bg-surface shadow-lg border border-border rounded-full text-sm font-medium text-text hover:bg-surface-highlight transition-colors"
-            >
-              Salir de Vista Previa
-            </button>
-          </div>
-        )}
       </MainLayout>
 
       {/* Overlays */}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-    Layout, Type, Image, Square, ShoppingCart, PlayCircle, Plus, File, Trash2, Edit2, Check, X, Settings, Link,
+    Layout, LayoutTemplate, Type, Image, Square, ShoppingCart, PlayCircle, Plus, File, Trash2, Edit2, Check, X, Settings, Link,
     ChevronDown, ChevronRight, Grid, Maximize, List, Columns, Search, Filter, Clock, Star, Megaphone, Menu, Divide, ToggleLeft, CreditCard,
     ArrowRight, Zap, Images, Palette, Heading1, RectangleHorizontal, Minus, LayoutGrid, Tag, SlidersHorizontal, DollarSign,
     MessageSquareQuote, Mail, Timer, ThumbsUp, Video
@@ -9,8 +9,11 @@ import * as LucideIcons from 'lucide-react';
 import { DraggableItem } from '../ui/DraggableItem';
 import { useEditorStore } from '../../store/useEditorStore';
 import { ProjectSettingsModal } from './ProjectSettingsModal';
-import { AdvancedIconPickerModal } from './AdvancedIconPickerModal';
+import { CommunityTemplatesModal } from './CommunityTemplatesModal';
 import clsx from 'clsx';
+import { AdvancedIconPickerModal } from './AdvancedIconPickerModal';
+
+// ... (existing code)
 
 const SidebarCategory = ({ title, children, defaultOpen = false }) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -41,6 +44,7 @@ export const Sidebar = () => {
     const [editName, setEditName] = useState('');
     const [showSettings, setShowSettings] = useState(false);
     const [showIconPicker, setShowIconPicker] = useState(false);
+    const [showTemplates, setShowTemplates] = useState(false);
 
     // AI Gen State removed
 
@@ -196,6 +200,7 @@ export const Sidebar = () => {
                             <DraggableItem type="filters" icon={<SlidersHorizontal />} label="Filtros" variant="emerald" />
                             <DraggableItem type="pricingTable" icon={<List />} label="Tabla Precios" variant="emerald" />
                             <DraggableItem type="price" icon={<DollarSign />} label="Precio" variant="emerald" />
+                            <DraggableItem type="checkout" icon={<CreditCard />} label="Checkout Final" description="Botón de pago MP con configuración." variant="emerald" />
                         </SidebarCategory>
 
                         <SidebarCategory title="Marketing">
@@ -211,6 +216,13 @@ export const Sidebar = () => {
                 </div>
 
                 <div className="p-4 border-t border-border space-y-2 bg-background z-10">
+                    <button
+                        onClick={() => setShowTemplates(true)}
+                        className="w-full py-2 px-4 bg-gradient-to-r from-violet-500/10 to-indigo-500/10 hover:from-violet-500/20 hover:to-indigo-500/20 border border-violet-500/20 rounded-lg text-sm font-bold text-indigo-600 hover:text-indigo-700 transition-all flex items-center justify-center gap-2 group"
+                    >
+                        <LayoutTemplate size={16} className="group-hover:scale-110 transition-transform" />
+                        Plantillas Comunidad
+                    </button>
                     <button
                         onClick={() => setShowSettings(true)}
                         className="w-full py-2 px-4 bg-surface hover:bg-surface-highlight border border-border rounded-lg text-sm font-medium text-text-muted hover:text-primary transition-colors flex items-center justify-center gap-2"
@@ -229,6 +241,7 @@ export const Sidebar = () => {
             </div >
 
             {showSettings && <ProjectSettingsModal onClose={() => setShowSettings(false)} />}
+            {showTemplates && <CommunityTemplatesModal onClose={() => setShowTemplates(false)} />}
 
             {/* Advanced Icon Picker */}
             {showIconPicker && (

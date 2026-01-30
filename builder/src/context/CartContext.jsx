@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 
 const CartContext = createContext();
 
@@ -68,9 +68,19 @@ export const CartProvider = ({ children }) => {
         setCartItems([]);
     };
 
-    const getCartTotal = () => {
+    const cartTotal = useMemo(() => {
         return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    }, [cartItems]);
+
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('es-AR', {
+            style: 'currency',
+            currency: 'ARS', // Or USD depending on user pref, defaulting to ARS or USD symbol
+        }).format(amount);
     };
+
+    // Keep getCartTotal for backward compatibility
+    const getCartTotal = () => cartTotal;
 
     const getCartCount = () => {
         return cartItems.reduce((total, item) => total + item.quantity, 0);
@@ -83,8 +93,10 @@ export const CartProvider = ({ children }) => {
             removeFromCart,
             deleteItem,
             clearCart,
-            getCartTotal,
-            getCartCount
+            getCartTotal, // Deprecated?
+            getCartCount,
+            cartTotal,
+            formatCurrency
         }}>
             {children}
         </CartContext.Provider>
