@@ -122,15 +122,58 @@ export const EffectsPanel = ({ selectedId, styles, updateStyles }) => {
                     </span>
                 </h3>
 
-                <div className="grid grid-cols-2 gap-2">
-                    <SliderControl label="Sup. Izq" value={getBorderValue('tl')} onChange={(v) => handleBorderChange('tl', v)} max={50} />
-                    <SliderControl label="Sup. Der" value={getBorderValue('tr')} onChange={(v) => handleBorderChange('tr', v)} max={50} />
-                    <SliderControl label="Inf. Izq" value={getBorderValue('bl')} onChange={(v) => handleBorderChange('bl', v)} max={50} />
-                    <SliderControl label="Inf. Der" value={getBorderValue('br')} onChange={(v) => handleBorderChange('br', v)} max={50} />
+                <SliderControl
+                    label="Redondeo Global"
+                    value={getBorderValue('tl')}
+                    onChange={(v) => handleBorderChange('all', v)}
+                    max={100}
+                />
+
+                <details className="text-[10px] group">
+                    <summary className="cursor-pointer text-text-muted hover:text-primary transition-colors mb-2 list-none flex items-center gap-1">
+                        <span className="group-open:rotate-90 transition-transform">▸</span> Control por Esquina
+                    </summary>
+                    <div className="grid grid-cols-2 gap-2 pl-2 border-l border-border/50 ml-1">
+                        <SliderControl label="Sup. Izq" value={getBorderValue('tl')} onChange={(v) => handleBorderChange('tl', v)} max={100} />
+                        <SliderControl label="Sup. Der" value={getBorderValue('tr')} onChange={(v) => handleBorderChange('tr', v)} max={100} />
+                        <SliderControl label="Inf. Izq" value={getBorderValue('bl')} onChange={(v) => handleBorderChange('bl', v)} max={100} />
+                        <SliderControl label="Inf. Der" value={getBorderValue('br')} onChange={(v) => handleBorderChange('br', v)} max={100} />
+                    </div>
+                </details>
+
+                {/* Border Width & Color */}
+                <div className="pt-2 border-t border-border/50">
+                    <SliderControl
+                        label="Grosor Borde"
+                        value={parseInt(styles.borderWidth) || 0}
+                        onChange={(v) => updateStyles(selectedId, { borderWidth: `${v}px`, borderStyle: v > 0 ? 'solid' : 'none' })}
+                        max={20}
+                    />
+
+                    <div className="mb-2">
+                        <span className="text-[10px] text-text-muted font-bold mb-1 block">Color Borde</span>
+                        <div className="flex gap-2">
+                            <input
+                                type="color"
+                                value={styles.borderColor || '#000000'}
+                                onChange={(e) => updateStyles(selectedId, { borderColor: e.target.value })}
+                                className="w-8 h-8 rounded cursor-pointer border border-border"
+                            />
+                            <input
+                                type="text"
+                                value={styles.borderColor || '#000000'}
+                                onChange={(e) => updateStyles(selectedId, { borderColor: e.target.value })}
+                                className="flex-1 text-xs p-1.5 border border-border rounded bg-surface-highlight text-text font-mono uppercase"
+                            />
+                        </div>
+                    </div>
                 </div>
 
                 <button
-                    onClick={() => handleBorderChange('all', 0)}
+                    onClick={() => {
+                        handleBorderChange('all', 0);
+                        updateStyles(selectedId, { borderWidth: '0px', borderStyle: 'none' });
+                    }}
                     className="text-[10px] text-red-400 hover:text-red-500 w-full text-right"
                 >Resetear Bordes</button>
             </div>

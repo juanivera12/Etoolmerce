@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Eye, Save, X, FileCode, Monitor, Tablet, Smartphone } from 'lucide-react';
 import clsx from 'clsx';
 import { useEditorStore } from '../../store/useEditorStore';
+import UserHeaderProfile from './UserHeaderProfile';
 
-export const Toolbar = ({ isPreviewMode, togglePreview, onPublish, onImport, onToggleGlobalSettings }) => {
+export const Toolbar = ({ isPreviewMode, togglePreview, onPublish, onImport, onToggleGlobalSettings, onPublishCommunity }) => {
     const { viewMode, setViewMode } = useEditorStore();
 
 
@@ -43,7 +44,7 @@ export const Toolbar = ({ isPreviewMode, togglePreview, onPublish, onImport, onT
 
 
                 {/* Global Settings */}
-
+                <UserHeaderProfile />
 
                 <div className="h-6 w-px bg-slate-200 mx-1"></div>
 
@@ -74,6 +75,13 @@ export const Toolbar = ({ isPreviewMode, togglePreview, onPublish, onImport, onT
                         >
                             <Save size={16} />
                             Exportar
+                        </button>
+                        <button
+                            onClick={onPublishCommunity}
+                            className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 rounded-lg shadow-lg shadow-indigo-500/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+                        >
+                            <Save size={16} />
+                            Publicar
                         </button>
                     </div>
                 )}

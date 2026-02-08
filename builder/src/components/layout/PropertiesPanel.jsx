@@ -7,6 +7,8 @@ import { TypographyPanel } from './TypographyPanel';
 import { EffectsPanel } from './EffectsPanel';
 import { InfoLabel } from '../ui/InfoLabel';
 import { MercadoPagoSettings } from './MercadoPagoSettings';
+import { SchemaForm } from './SchemaRenderer';
+import { CarouselSchema } from '../../data/carouselSchema';
 
 const SliderControl = ({ label, value, onChange, min = 0, max = 100, step = 1, helpTitle, helpDesc, unit = 'px' }) => {
     // Extract numeric value safely
@@ -23,7 +25,7 @@ const SliderControl = ({ label, value, onChange, min = 0, max = 100, step = 1, h
                     <InfoLabel label={label} tooltip={helpDesc} />
                 </div>
                 <span className="text-[9px] font-mono text-text-muted bg-surface-highlight px-1.5 py-0.5 rounded border border-border">
-                    {value || '0px'}
+                    {numericValue}{unit}
                 </span>
             </div>
             <input
@@ -164,6 +166,12 @@ export const PropertiesPanel = () => {
                                         <option value="fade-left">Fade Left</option>
                                         <option value="fade-right">Fade Right</option>
                                     </optgroup>
+                                    <optgroup label="Efectos Especiales">
+                                        <option value="pulse">Latir (Pulse)</option>
+                                        <option value="bounce">Rebotar (Bounce)</option>
+                                        <option value="shake">Sacudir (Shake)</option>
+                                        <option value="heartBeat">Latido Fuerte</option>
+                                    </optgroup>
                                     <optgroup label="Zoom">
                                         <option value="zoom-in">Zoom In</option>
                                         <option value="zoom-out">Zoom Out</option>
@@ -189,7 +197,7 @@ export const PropertiesPanel = () => {
                                 min={0}
                                 max={3000}
                                 step={100}
-                                unit=""
+                                unit="ms"
                             />
 
                             {/* Delay Slider (0 - 3000ms) */}
@@ -201,7 +209,7 @@ export const PropertiesPanel = () => {
                                 min={0}
                                 max={3000}
                                 step={50}
-                                unit=""
+                                unit="ms"
                             />
                         </div>
 
@@ -506,6 +514,22 @@ export const PropertiesPanel = () => {
                                         </button>
                                     </div>
                                 </div>
+                            </div>
+                        )}
+
+                        {/* Component Specific Schema Forms */}
+                        {selectedNode.type === 'carousel' && (
+                            <div className="pb-4 border-b border-border mb-4">
+                                <SchemaForm
+                                    schema={CarouselSchema}
+                                    data={selectedNode.data || {}}
+                                    onUpdate={(key, value) => {
+                                        if (key.startsWith('data.')) {
+                                            const propName = key.split('.')[1];
+                                            updateProperty(selectedId, 'data', { ...(selectedNode.data || {}), [propName]: value });
+                                        }
+                                    }}
+                                />
                             </div>
                         )}
 

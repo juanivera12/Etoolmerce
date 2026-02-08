@@ -7,30 +7,50 @@ import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { ProductCard } from '../shop/ProductCard';
 import { CartWidget } from '../shop/CartWidget';
 import { useCart } from '../../context/CartContext';
+import { CarouselBlock } from '../blocks/CarouselBlock';
 
 
-import AOS from 'aos';
-import 'aos/dist/aos.css';
+
+// import AOS from 'aos';
+// import 'aos/dist/aos.css';
+
+import { useRelativeMouse } from '../../hooks/useRelativeMouse';
 
 const ElementWrapper = ({ node, children }) => {
     const { selectedId, selectElement, addElement, moveElement, updateStyles, isPreviewMode, setActivePage } = useEditorStore();
     const { addToCart } = useCart();
+    const nodeRef = useRef(null);
 
-    // Initialize AOS
-    React.useEffect(() => {
-        AOS.init({
-            duration: 1000,
-            once: false,
-            mirror: true
-        });
-    }, []);
+    // Initialize AOS removed - moved to App.jsx specific for Editor or Preview?
+    // Actually, usually we Init once at root. 
 
     // Refresh AOS when node animation changes or preview mode toggles
     React.useEffect(() => {
         if (node.animation) {
-            AOS.refresh();
+            // Debounce refresh to avoid lag?
+            const timer = setTimeout(() => {
+                AOS.refresh();
+            }, 100);
+            return () => clearTimeout(timer);
         }
     }, [node.animation, isPreviewMode]);
+
+    // --- Ambient & Interactive Backgrounds ---
+    const bgConfig = node.backgroundConfig || {};
+
+    // 1. Interactive Spotlight Hook
+    // Requires ref to the element (nodeRef)
+    useRelativeMouse(nodeRef, bgConfig.spotlightEnabled);
+
+    // 2. Ambient Classes
+    const ambientClass = {
+        'pulse': 'animate-radial-pulse',
+        'aurora': 'animate-aurora',
+        'noise': 'animate-noise'
+    }[bgConfig.ambientType];
+
+    const spotlightClass = bgConfig.spotlightEnabled ? 'bg-interactive-spotlight' : '';
+    // ----------------------------------------
 
     // Hover Animation Props (Preview Only)
     const hoverProps = isPreviewMode ? {
@@ -42,18 +62,62 @@ const ElementWrapper = ({ node, children }) => {
         transition: { duration: 0.2 }
     } : {};
 
-    // AOS Props
-    const aosProps = node.animation?.type ? {
-        'data-aos': node.animation.type,
-        'data-aos-duration': node.animation.duration,
-        'data-aos-delay': node.animation.delay,
-        'data-aos-once': 'false'
+
+    // Framer Motion Variants for Scroll Animations
+    const getAnimationVariants = (type) => {
+        switch (type) {
+            case 'fade-up': return { hidden: { opacity: 0, y: 50 }, visible: { opacity: 1, y: 0 } };
+            case 'fade-down': return { hidden: { opacity: 0, y: -50 }, visible: { opacity: 1, y: 0 } };
+            case 'fade-left': return { hidden: { opacity: 0, x: -50 }, visible: { opacity: 1, x: 0 } };
+            case 'fade-right': return { hidden: { opacity: 0, x: 50 }, visible: { opacity: 1, x: 0 } };
+            case 'zoom-in': return { hidden: { opacity: 0, scale: 0.8 }, visible: { opacity: 1, scale: 1 } };
+            case 'zoom-out': return { hidden: { opacity: 0, scale: 1.2 }, visible: { opacity: 1, scale: 1 } };
+            case 'flip-left': return { hidden: { opacity: 0, rotateY: -90 }, visible: { opacity: 1, rotateY: 0 } };
+            case 'flip-right': return { hidden: { opacity: 0, rotateY: 90 }, visible: { opacity: 1, rotateY: 0 } };
+            case 'flip-up': return { hidden: { opacity: 0, rotateX: -90 }, visible: { opacity: 1, rotateX: 0 } };
+            case 'slide-up': return { hidden: { y: 100 }, visible: { y: 0 } };
+            case 'slide-down': return { hidden: { y: -100 }, visible: { y: 0 } };
+            // Special Effects (Continuous loops or one-offs)
+            case 'pulse': return { visible: { scale: [1, 1.05, 1], transition: { repeat: Infinity, duration: 1 } } };
+            case 'bounce': return { visible: { y: [0, -20, 0], transition: { repeat: Infinity, duration: 1 } } };
+            case 'shake': return { visible: { x: [0, -10, 10, -10, 10, 0], transition: { repeat: Infinity, duration: 1 } } };
+            case 'heartBeat': return { visible: { scale: [1, 1.3, 1, 1.3, 1], transition: { repeat: Infinity, duration: 1.3 } } };
+            default: return { hidden: {}, visible: {} };
+        }
+    };
+
+    const animType = node.animation?.type;
+    const variants = animType ? getAnimationVariants(animType) : {};
+
+    // Animation Config
+    const animDuration = node.animation?.duration ? node.animation.duration / 1000 : 0.5;
+    const animDelay = node.animation?.delay ? node.animation.delay / 1000 : 0;
+
+    // AOS Props replacement
+    const motionProps = animType ? {
+        variants: variants,
+        initial: "hidden",
+        whileInView: "visible",
+        viewport: { once: false, amount: 0.2 }, // Re-animate every time
+        transition: {
+            duration: animDuration,
+            delay: animDelay,
+            ease: "easeOut"
+        }
     } : {};
+
+    // Merge hover props if preview mode
+    if (isPreviewMode && hoverProps.whileHover) {
+        // We need to merge whileHover into motionProps or separate?
+        // Framer Motion accepts multiple props.
+        // But if 'pulse' uses 'visible' state, hover uses 'whileHover'. It should be fine.
+        Object.assign(motionProps, hoverProps);
+    }
 
     const isSelected = selectedId === node.id && !isPreviewMode;
     const [dropPosition, setDropPosition] = useState(null);
     const [activeDropZone, setActiveDropZone] = useState(null);
-    const nodeRef = useRef(null);
+    // nodeRef initialized above
 
     const handleClick = (e) => {
         if (isPreviewMode) {
@@ -287,6 +351,11 @@ const ElementWrapper = ({ node, children }) => {
 
     const hasAOS = !!node.animation?.type;
 
+    // CSS Variables for Ambient Control
+    const ambientVars = {};
+    if (bgConfig.ambientOpacity) ambientVars['--ambient-opacity'] = bgConfig.ambientOpacity;
+    if (bgConfig.ambientDuration) ambientVars['--ambient-duration'] = `${bgConfig.ambientDuration}s`;
+
     return (
         <motion.div
             key={renderKey}
@@ -295,9 +364,9 @@ const ElementWrapper = ({ node, children }) => {
             animate={hasAOS ? undefined : { opacity: 1, scale: 1 }}
             exit={hasAOS ? undefined : { opacity: 0, scale: 0.9 }}
             transition={{ duration: 0.2 }}
-            {...hoverProps}
-            {...aosProps}
+            {...motionProps}
             ref={nodeRef}
+            data-node-id={node.id}
 
 
             draggable={!isPreviewMode}
@@ -308,7 +377,10 @@ const ElementWrapper = ({ node, children }) => {
             onDrop={handleDrop}
             className={clsx(
                 "relative transition-all duration-200",
-                "aos-animate", // Force class for AOS detection
+                node.className, // CRITICAL: Apply texture classes stored here
+                ambientClass, // Apply Ambient Animation
+                spotlightClass, // Apply Interactive Spotlight
+                // "aos-animate" removed to allow scroll trigger
                 !isPreviewMode && "cursor-pointer",
                 isSelected ? "ring-2 ring-indigo-500 ring-offset-2 z-10" : (!isPreviewMode && "hover:ring-1 hover:ring-indigo-300 hover:z-10"),
                 canAcceptDrop && "hover:bg-slate-50/50", // Visual hint for drop zones
@@ -321,7 +393,8 @@ const ElementWrapper = ({ node, children }) => {
             )}
             style={{
                 ...node.styles,
-                boxShadow: dropPosition ? '0 0 0 2px #6366f1' : (isSelected ? undefined : 'none') // Removed transition, handled by motion
+                ...ambientVars,
+                boxShadow: dropPosition ? '0 0 0 2px #6366f1' : (isSelected ? undefined : 'none')
             }}
         >
             {/* Smart Guide: Center Line */}
@@ -381,52 +454,30 @@ export const Renderer = ({ node }) => {
             e.preventDefault();
             e.stopPropagation();
 
-            // Coordinate Calculation Logic
+            // 1. Coordinates Calculation
             const rect = e.currentTarget.getBoundingClientRect();
             const element = e.currentTarget;
+            const x = (e.clientX - rect.left) + element.scrollLeft;
+            const y = (e.clientY - rect.top) + element.scrollTop;
 
-            // Formula: Final = (Mouse - CanvasOffset) + Scroll
-            // rect.left is CanvasOffset (viewport relative)
-            // element.scrollLeft is Scroll
-
-            const rawX = (e.clientX - rect.left) + element.scrollLeft;
-            const rawY = (e.clientY - rect.top) + element.scrollTop;
-
-            // Clamp to bounds (0 to scrollWidth/Height)
-            const clamp = (val, min, max) => Math.min(Math.max(val, min), max); // Safety
-
-            const relX = clamp(rawX, 0, element.scrollWidth);
-            const relY = clamp(rawY, 0, element.scrollHeight);
-
-            // Handle Existing Element Move (Drag & Drop)
+            // 2. Handle Existing Element Move
             const draggedId = e.dataTransfer.getData('application/react-builder-id');
             if (draggedId) {
-                // If moving within the same page root, just update styles
-                // If moving from elsewhere, moveElement logic handles structure, then we update styles here.
-
-                // IMPORTANT: If we are dragging an element that is already on the board, 
-                // we might want to center it on the mouse or keep offset? 
-                // For simplicity as requested: "left = MouseX - CanvasX". This puts top-left corner at mouse.
-                // Ideally we center it, but let's stick to the requested formula for precision.
-
-                // Correction: Use the calculated relX/relY
                 useEditorStore.getState().updateStyles(draggedId, {
                     position: 'absolute',
-                    left: `${relX}px`,
-                    top: `${relY}px`,
-                    zIndex: '10' // Ensure visibility
+                    left: `${x}px`,
+                    top: `${y}px`,
+                    zIndex: '10'
                 });
-
-                // Ensure it's in the root children list if it wasn't
                 const { reparentElement } = useEditorStore.getState();
-                reparentElement(draggedId, node.id); // Moves to inside of node.id
+                reparentElement(draggedId, node.id);
                 return;
             }
 
-            // Handle New Element Drop
+            // 3. Handle New Component Drop
             const type = e.dataTransfer.getData('application/react-builder-type');
             if (type) {
-                // Auto-Upload for Root Drop (Image & Video)
+                // Auto-Upload for Image/Video
                 if (type === 'image' || type === 'video') {
                     const acceptType = type === 'image' ? 'image/*' : 'video/*';
                     const input = document.createElement('input');
@@ -437,24 +488,17 @@ export const Renderer = ({ node }) => {
                         if (file) {
                             const reader = new FileReader();
                             reader.onload = (ev) => {
-                                if (type === 'image') {
-                                    // We can't easily pass coordinates to addImageElement if it doesn't support it.
-                                    // But let's try to find the node and move it? Or just add it.
-                                    // Actually, addImageElement appends.
-                                    useEditorStore.getState().addImageElement(node.id, ev.target.result);
-                                    // TODO: If we want to respect drop coordinates (relX, relY), we might need to update the last added element.
-                                } else {
-                                    // Video
-                                    useEditorStore.getState().addElement(node.id, 'video', {
-                                        content: ev.target.result,
-                                        styles: {
-                                            position: 'absolute',
-                                            left: `${relX}px`,
-                                            top: `${relY}px`,
-                                            zIndex: '10'
-                                        }
-                                    });
-                                }
+                                useEditorStore.getState().addElement(node.id, type, {
+                                    content: ev.target.result,
+                                    styles: {
+                                        position: 'absolute',
+                                        left: `${x}px`,
+                                        top: `${y}px`,
+                                        width: '300px',
+                                        height: 'auto',
+                                        zIndex: '10'
+                                    }
+                                });
                             };
                             reader.readAsDataURL(file);
                         }
@@ -463,44 +507,43 @@ export const Renderer = ({ node }) => {
                     return;
                 }
 
+                // Add Normal Elements
                 addElement(node.id, type, {
                     position: 'absolute',
-                    left: `${relX}px`,
-                    top: `${relY}px`,
+                    left: `${x}px`,
+                    top: `${y}px`,
                     zIndex: '10'
                 });
                 return;
             }
 
-            // Handle File Drop (Desktop) - Fallback for images dragged from OS
+            // 4. Handle Desktop File Drop
             if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
                 const file = e.dataTransfer.files[0];
                 if (file.type.startsWith('image/')) {
                     const reader = new FileReader();
                     reader.onload = (event) => {
-                        // Add image at coordinates
-                        useEditorStore.getState().addImageElement(node.id, event.target.result);
-                        // Note: addImageElement might not accept custom styles in store yet? 
-                        // Let's check store in next step or assume it appends. 
-                        // To force position, we might need to get the ID of the new element.
-                        // For now, let's just let it drop and user can move it. 
-                        // Or we can update addImageElement signature later if needed.
-                        // But wait, addImageElement usually appends.
-                        // Let's assume standard behavior for files for now. 
-                        // Actually, better to use the new coordinate logic if we can.
-                        // But addImageElement doesn't take coords. 
-                        // Standard flow: Add -> It appears -> User moves.
+                        useEditorStore.getState().addElement(node.id, 'image', {
+                            content: event.target.result,
+                            styles: {
+                                position: 'absolute',
+                                left: `${x}px`,
+                                top: `${y}px`,
+                                width: '300px',
+                                height: 'auto',
+                                zIndex: '10'
+                            }
+                        });
                     };
                     reader.readAsDataURL(file);
                 }
-                return;
             }
         };
 
         return (
             <ElementWrapper node={node}>
                 <div
-                    style={node.styles}
+                    style={{ ...node.styles, position: 'relative' }} // 1. CSS Change: Container Relative
                     className="min-h-screen w-full bg-white shadow-sm"
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
@@ -572,40 +615,7 @@ export const Renderer = ({ node }) => {
         );
     }
 
-    if (node.type === 'carousel') {
-        const [current, setCurrent] = useState(0);
-        const next = (e) => { e.stopPropagation(); setCurrent(c => (c + 1) % (node.children?.length || 1)); };
-        const prev = (e) => { e.stopPropagation(); setCurrent(c => (c - 1 + (node.children?.length || 1)) % (node.children?.length || 1)); };
 
-        return (
-            <ElementWrapper node={node}>
-                <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                    {/* Render specific slide */}
-                    {node.children && node.children.length > 0 && (
-                        <Renderer node={node.children[current]} />
-                    )}
-
-                    {/* Controls */}
-                    <button onClick={prev} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 z-10 transition-colors">
-                        <LucideIcons.ChevronLeft size={20} />
-                    </button>
-                    <button onClick={next} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 z-10 transition-colors">
-                        <LucideIcons.ChevronRight size={20} />
-                    </button>
-
-                    {/* Indicators */}
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-                        {node.children?.map((_, i) => (
-                            <div
-                                key={i}
-                                className={`w-2 h-2 rounded-full ${i === current ? 'bg-white' : 'bg-white/50'}`}
-                            />
-                        ))}
-                    </div>
-                </div>
-            </ElementWrapper>
-        );
-    }
 
     if (node.type === 'tabs') {
         return (
@@ -816,6 +826,23 @@ export const Renderer = ({ node }) => {
         return (
             <ElementWrapper node={node}>
                 <CartWidget node={node} />
+            </ElementWrapper>
+        );
+    }
+
+    if (node.type === 'carousel') {
+        const carouselData = node.data || {};
+        return (
+            <ElementWrapper node={node}>
+                <CarouselBlock
+                    slides={carouselData.slides || []}
+                    autoplayEnabled={carouselData.autoplayEnabled}
+                    autoplayDelay={carouselData.autoplayDelay}
+                    showArrows={carouselData.showArrows}
+                    showDots={carouselData.showDots}
+                    effect={carouselData.effect}
+                    objectFit={carouselData.objectFit}
+                />
             </ElementWrapper>
         );
     }

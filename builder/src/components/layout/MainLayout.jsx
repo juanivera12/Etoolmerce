@@ -17,7 +17,7 @@ export const MainLayout = ({ children, leftPanel, rightPanel, toolbar }) => {
                         {toolbar}
                     </header>
                 )}
-                <div className="flex-1 relative overflow-auto">
+                <div className="flex-1 relative overflow-auto" id="main-scroll-container">
                     {children}
                 </div>
             </main>

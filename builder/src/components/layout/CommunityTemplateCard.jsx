@@ -1,16 +1,19 @@
 import React from 'react';
-import { Download, LayoutTemplate, User, Heart } from 'lucide-react';
+import { Download, LayoutTemplate, Zap } from 'lucide-react';
 import clsx from 'clsx';
 
 export const CommunityTemplateCard = ({ template, onUse }) => {
+    // Support both old community structure (image) and new registry (thumbnailSrc, thumbnail_url)
+    const imageSrc = template.thumbnail_url || template.thumbnailSrc || template.image;
+
     return (
         <div className="group border border-border rounded-lg overflow-hidden bg-surface hover:border-primary transition-all hover:shadow-lg flex flex-col h-full animate-in fade-in duration-300">
             {/* Preview Image Area (16:9) */}
-            <div className="aspect-video bg-slate-100 relative overflow-hidden flex items-center justify-center">
-                {template.image ? (
+            <div className="aspect-video bg-slate-100 relative overflow-hidden flex items-center justify-center isolate">
+                {imageSrc ? (
                     <img
-                        src={template.image}
-                        alt={template.name}
+                        src={imageSrc}
+                        alt={template.title || template.name}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                 ) : (
@@ -21,14 +24,14 @@ export const CommunityTemplateCard = ({ template, onUse }) => {
                 )}
 
                 {/* Badge Category */}
-                <div className="absolute top-2 left-2">
+                <div className="absolute top-2 left-2 z-10">
                     <span className="bg-black/60 backdrop-blur-sm text-white text-[10px] px-2 py-1 rounded-full font-medium border border-white/10 uppercase tracking-wide">
-                        {template.category || 'E-commerce'}
+                        {template.category || 'Comunidad'}
                     </span>
                 </div>
 
                 {/* Overlay Actions */}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px] z-20">
                     <button
                         onClick={() => onUse(template)}
                         className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg font-medium shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-all flex items-center gap-2"
@@ -40,29 +43,39 @@ export const CommunityTemplateCard = ({ template, onUse }) => {
             </div>
 
             {/* Info */}
-            <div className="p-4 flex-1 flex flex-col justify-between">
+            <div className="p-4 flex-1 flex flex-col gap-2">
                 <div>
-                    <h3 className="font-bold text-text truncate text-sm mb-1" title={template.name}>
-                        {template.name}
+                    <h3 className="font-bold text-text truncate text-sm" title={template.title || template.name}>
+                        {template.title || template.name}
                     </h3>
 
-                    {/* Author */}
-                    <div className="flex items-center gap-2 mt-2">
-                        <div className="w-5 h-5 rounded-full bg-surface-highlight flex items-center justify-center border border-border overflow-hidden">
-                            <User size={12} className="text-text-muted" />
-                        </div>
-                        <span className="text-xs text-text-muted flex items-center gap-1">
-                            por <span className="text-text font-medium hover:underline cursor-pointer">{template.author || 'Anónimo'}</span>
-                        </span>
-                    </div>
+                    {/* Description */}
+                    {template.description && (
+                        <p className="text-xs text-text-muted mt-1 line-clamp-2 leading-relaxed">
+                            {template.description}
+                        </p>
+                    )}
                 </div>
 
-                <div className="flex justify-between items-center mt-3 pt-3 border-t border-border">
-                    <div className="flex items-center gap-1 text-xs text-text-muted">
-                        <Heart size={12} className={clsx("hover:text-red-500 cursor-pointer transition-colors", template.likes > 0 && "text-red-500 fill-red-500")} />
-                        <span>{template.likes || 0}</span>
-                    </div>
-                    <span className="text-[10px] bg-green-500/10 text-green-600 px-2 py-0.5 rounded-full border border-green-500/20 font-medium">Gratis</span>
+                {/* Footer / Meta */}
+                <div className="mt-auto pt-3 flex items-center justify-between border-t border-border/50">
+                    {template.author_name && (
+                        <div className="flex items-center gap-1.5 text-text-muted">
+                            <div className="w-5 h-5 rounded-full bg-surface-highlight flex items-center justify-center text-[10px] font-bold uppercase text-text border border-border">
+                                {template.author_name.charAt(0)}
+                            </div>
+                            <span className="text-xs font-medium truncate max-w-[100px]">
+                                Por: {template.author_name}
+                            </span>
+                        </div>
+                    )}
+
+                    {/* Downloads count if available */}
+                    {template.downloads !== undefined && (
+                        <span className="text-[10px] text-text-muted flex items-center gap-1">
+                            <Download size={10} /> {template.downloads}
+                        </span>
+                    )}
                 </div>
             </div>
         </div>

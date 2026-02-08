@@ -204,6 +204,7 @@ export const Sidebar = () => {
                         </SidebarCategory>
 
                         <SidebarCategory title="Marketing">
+                            <DraggableItem type="carousel" icon={<Images />} label="Carrusel 3D" description="Slider con efectos 3D y autoplay." variant="coral" />
                             <DraggableItem type="hero" icon={<Star />} label="Hero Banner" description="Banner principal de impacto." variant="coral" />
                             <DraggableItem type="flashOffer" icon={<Zap />} label="Oferta Flash" description="Bloque de urgencia con cuenta regresiva." variant="coral" />
                             <DraggableItem type="testimonial" icon={<MessageSquareQuote />} label="Testimonios" variant="coral" />

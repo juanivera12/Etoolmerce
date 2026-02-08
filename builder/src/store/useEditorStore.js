@@ -131,7 +131,7 @@ const createNode = (type, customStyles = {}) => {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    position: "static",
+                    position: "relative",
                     width: "100%",
                     borderBottom: "1px solid #333",
                     ...baseStyles
@@ -199,7 +199,7 @@ const createNode = (type, customStyles = {}) => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    position: 'static',
+                    position: 'relative',
                     zIndex: '100',
                     ...customStyles
                 },
@@ -240,7 +240,7 @@ const createNode = (type, customStyles = {}) => {
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '40px',
-                    position: 'static',
+                    position: 'relative',
                     marginTop: 'auto',
                     ...customStyles
                 },
@@ -400,7 +400,7 @@ const createNode = (type, customStyles = {}) => {
                         id: `${id}-title`,
                         type: 'text',
                         content: "Título del Producto",
-                        styles: { fontSize: "18px", fontWeight: "bold" }
+                        styles: { fontSize: "18px", fontWeight: "bold", color: "#334155" }
                     },
                     {
                         id: `${id}-price`,
@@ -557,12 +557,20 @@ const createNode = (type, customStyles = {}) => {
         case 'carousel':
             return {
                 id, type,
-                styles: { width: '100%', height: '300px', position: 'relative', overflow: 'hidden', backgroundColor: '#e2e8f0', ...baseStyles },
-                children: [
-                    { id: `${id}-s1`, type: 'image', content: 'https://via.placeholder.com/800x400/1e293b/ffffff?text=Slide+1', styles: { width: '100%', height: '100%', objectFit: 'cover' } },
-                    { id: `${id}-s2`, type: 'image', content: 'https://via.placeholder.com/800x400/4f46e5/ffffff?text=Slide+2', styles: { width: '100%', height: '100%', objectFit: 'cover' } },
-                    { id: `${id}-s3`, type: 'image', content: 'https://via.placeholder.com/800x400/ec4899/ffffff?text=Slide+3', styles: { width: '100%', height: '100%', objectFit: 'cover' } }
-                ]
+                styles: { width: '100%', height: '400px', position: 'relative', overflow: 'hidden', ...baseStyles, ...customStyles },
+                data: {
+                    slides: [
+                        { id: 's1', src: 'https://placehold.co/800x400?text=Slide+1' },
+                        { id: 's2', src: 'https://placehold.co/800x400?text=Slide+2' },
+                        { id: 's3', src: 'https://placehold.co/800x400?text=Slide+3' }
+                    ],
+                    autoplayEnabled: true,
+                    autoplayDelay: 3000,
+                    showArrows: true,
+                    showDots: true,
+                    effect: 'slide'
+                },
+                children: []
             };
         case 'tabs':
             return {
@@ -598,7 +606,7 @@ const createNode = (type, customStyles = {}) => {
                         styles: { padding: "16px", border: "1px solid #e2e8f0", borderRadius: "8px", backgroundColor: "white", display: "flex", flexDirection: "column", gap: "12px", width: "100%" },
                         children: [
                             { id: `${id}-p1-img`, type: 'image', content: "https://via.placeholder.com/200", styles: { width: "100%", height: "200px", objectFit: "cover" } },
-                            { id: `${id}-p1-t`, type: 'text', content: "Producto 1", styles: { fontSize: "16px", fontWeight: "bold" } },
+                            { id: `${id}-p1-t`, type: 'text', content: "Producto 1", styles: { fontSize: "16px", fontWeight: "bold", color: "#334155" } },
                             { id: `${id}-p1-p`, type: 'text', content: "$49.00", styles: { color: "#4f46e5" } }
                         ]
                     },
@@ -607,7 +615,7 @@ const createNode = (type, customStyles = {}) => {
                         styles: { padding: "16px", border: "1px solid #e2e8f0", borderRadius: "8px", backgroundColor: "white", display: "flex", flexDirection: "column", gap: "12px", width: "100%" },
                         children: [
                             { id: `${id}-p2-img`, type: 'image', content: "https://via.placeholder.com/200", styles: { width: "100%", height: "200px", objectFit: "cover" } },
-                            { id: `${id}-p2-t`, type: 'text', content: "Producto 2", styles: { fontSize: "16px", fontWeight: "bold" } },
+                            { id: `${id}-p2-t`, type: 'text', content: "Producto 2", styles: { fontSize: "16px", fontWeight: "bold", color: "#334155" } },
                             { id: `${id}-p2-p`, type: 'text', content: "$59.00", styles: { color: "#4f46e5" } }
                         ]
                     },
@@ -616,7 +624,7 @@ const createNode = (type, customStyles = {}) => {
                         styles: { padding: "16px", border: "1px solid #e2e8f0", borderRadius: "8px", backgroundColor: "white", display: "flex", flexDirection: "column", gap: "12px", width: "100%" },
                         children: [
                             { id: `${id}-p3-img`, type: 'image', content: "https://via.placeholder.com/200", styles: { width: "100%", height: "200px", objectFit: "cover" } },
-                            { id: `${id}-p3-t`, type: 'text', content: "Producto 3", styles: { fontSize: "16px", fontWeight: "bold" } },
+                            { id: `${id}-p3-t`, type: 'text', content: "Producto 3", styles: { fontSize: "16px", fontWeight: "bold", color: "#334155" } },
                             { id: `${id}-p3-p`, type: 'text', content: "$69.00", styles: { color: "#4f46e5" } }
                         ]
                     }
@@ -1473,10 +1481,12 @@ export const useEditorStore = create((set, get) => ({
     activePageId: initialHome.id,
 
     selectedId: null,
+    activeTool: 'select', // 'select', 'hand', 'multiselect'
     isPreviewMode: false,
     viewMode: 'desktop',
     isTutorialActive: false,
 
+    setTool: (tool) => set({ activeTool: tool }),
     setViewMode: (mode) => set({ viewMode: mode }),
 
 
@@ -1602,22 +1612,32 @@ export const useEditorStore = create((set, get) => ({
         }
 
         const updatedContent = updateNode(activePage.content, targetId, (node) => {
+            // If absolute, ensure width is not 100% to avoid overflow/invisibility
+            const isAbsolute = customStyles.position === 'absolute';
+
             if (type === 'header' || type === 'footer') {
-                customStyles = { ...customStyles, position: 'static' };
+                customStyles = { ...customStyles, position: 'relative', width: '100%' }; // Headers always full width relative
+            } else if (isAbsolute && (type === 'container' || type === 'section')) {
+                customStyles = {
+                    ...customStyles,
+                    width: '300px', // Default box size for drag
+                    height: '200px',
+                    minHeight: '200px',
+                    backgroundColor: '#f8fafc', // Light gray background so it's visible on black
+                    border: '1px dashed #cbd5e1'
+                };
+            } else if (isAbsolute && type === 'text') {
+                customStyles = { ...customStyles, width: 'auto', minWidth: '100px' };
             }
+
             const newNode = createNode(type, customStyles);
             let newChildren = [...(node.children || [])];
 
             if (type === 'header') {
-
-
                 newChildren.unshift(newNode);
             } else if (type === 'footer') {
-
                 newChildren.push(newNode);
             } else {
-
-
                 const footerIndex = newChildren.findIndex(c => c.type === 'footer');
                 if (footerIndex !== -1) {
                     newChildren.splice(footerIndex, 0, newNode);

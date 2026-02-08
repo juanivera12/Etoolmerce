@@ -1,241 +1,247 @@
-import React, { useState, useRef } from 'react';
-import { X, Upload, Camera, Image, ShieldCheck, Shrub, AlertTriangle, Loader2 } from 'lucide-react';
-import { useContentModeration } from '../../hooks/useContentModeration';
-import html2canvas from 'html2canvas';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../../services/supabaseClient';
+import { useEditorStore } from '../../store/useEditorStore';
+import { X, Upload, Loader2, CheckCircle, Image as ImageIcon } from 'lucide-react';
+import clsx from 'clsx';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const PublishTemplateModal = ({ onClose }) => {
-    const { validateImageContent, isAnalyzing } = useContentModeration();
+    // 1. Get current components from store
+    // 1. Get current components from store
+    const pages = useEditorStore((state) => state.pages);
+    const activePageId = useEditorStore((state) => state.activePageId);
 
-    const [formData, setFormData] = useState({
-        title: '',
-        author: '',
-        category: 'E-commerce'
-    });
-    const [previewImage, setPreviewImage] = useState(null);
-    const [imageFile, setImageFile] = useState(null); // File object or Blob
-    const [error, setError] = useState(null);
-    const [isCapturing, setIsCapturing] = useState(false);
-    const [isSuccess, setIsSuccess] = useState(false);
+    // Derive components from state safely
+    const components = pages.find(p => p.id === activePageId)?.content || [];
 
-    const fileInputRef = useRef(null);
+    // Local State
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+    const [thumbnail, setThumbnail] = useState(null);
+    const [previewUrl, setPreviewUrl] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [success, setSuccess] = useState(false);
+    const [error, setError] = useState('');
+    const [user, setUser] = useState(null);
 
-    const handleInputChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
+    // Fetch User on Mount to get author_id and author_name
+    useEffect(() => {
+        const getUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) setUser(user);
+        };
+        getUser();
+    }, []);
 
-    const handleFileSelect = async (e) => {
+    // Handle File Selection
+    const handleFileChange = (e) => {
         const file = e.target.files[0];
-        if (!file) return;
-
-        setError(null);
-        try {
-            // Preview
-            const url = URL.createObjectURL(file);
-            setPreviewImage(url);
-            setImageFile(file);
-
-            // Validate Immediately
-            await validateImageContent(file);
-        } catch (err) {
-            setError(err.message);
-            setPreviewImage(null);
-            setImageFile(null);
+        if (file) {
+            setThumbnail(file);
+            setPreviewUrl(URL.createObjectURL(file));
         }
     };
 
-    const handleCapture = async () => {
-        setError(null);
-        setIsCapturing(true);
-        try {
-            const workspace = document.getElementById('canvas-area'); // Assuming this ID exists or I need to target the right element
-            if (!workspace) throw new Error("No se encontró el área de trabajo para capturar.");
-
-            const canvas = await html2canvas(workspace, {
-                useCORS: true,
-                scale: 0.5, // Lower resolution for thumbnail
-                logging: false
-            });
-
-            canvas.toBlob(async (blob) => {
-                const url = URL.createObjectURL(blob);
-                setPreviewImage(url);
-                setImageFile(blob); // Treat blob as file
-
-                try {
-                    await validateImageContent(blob);
-                } catch (err) {
-                    setError(err.message);
-                    setPreviewImage(null);
-                    setImageFile(null);
-                } finally {
-                    setIsCapturing(false);
-                }
-            }, 'image/jpeg', 0.8);
-
-        } catch (err) {
-            console.error(err);
-            setError("Error al capturar la pantalla: " + err.message);
-            setIsCapturing(false);
-        }
-    };
-
-    const handleSubmit = async (e) => {
+    // Main Publish Logic
+    const handlePublish = async (e) => {
         e.preventDefault();
-        if (!imageFile) {
-            setError("Debes subir o capturar una imagen de portada.");
+
+        if (!user) {
+            setError("Debes iniciar sesión para publicar.");
             return;
         }
-        if (isAnalyzing) return;
+        if (!title || !thumbnail) {
+            setError("El título y la miniatura son obligatorios.");
+            return;
+        }
 
-        // Simulate Submission
-        setIsSuccess(true);
-        setTimeout(() => {
-            onClose();
-        }, 2000);
+        setLoading(true);
+        setError('');
+
+        try {
+            // 1. Upload Image to Supabase Storage
+            const fileExt = thumbnail.name.split('.').pop();
+            const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('template-previews')
+                .upload(fileName, thumbnail);
+
+            if (uploadError) throw uploadError;
+
+            // Get Public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('template-previews')
+                .getPublicUrl(fileName);
+
+            // 2. Insert Record into Database
+            const { error: insertError } = await supabase
+                .from('community_templates')
+                .insert([
+                    {
+                        title,
+                        description,
+                        thumbnail_url: publicUrl,
+                        structure_json: components, // The actual editor content
+                        author_id: user.id,
+                        author_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Unknown User'
+                    }
+                ]);
+
+            if (insertError) throw insertError;
+
+            setSuccess(true);
+
+            // Auto close after success
+            setTimeout(() => {
+                onClose();
+            }, 2000);
+
+        } catch (err) {
+            console.error("Publish Error:", err);
+            setError(err.message || "Error al publicar la plantilla.");
+        } finally {
+            setLoading(false);
+        }
     };
 
-    if (isSuccess) {
-        return (
-            <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center backdrop-blur-sm">
-                <div className="bg-surface p-8 rounded-xl flex flex-col items-center animate-in zoom-in text-center">
-                    <div className="w-16 h-16 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mb-4">
-                        <ShieldCheck size={32} />
-                    </div>
-                    <h3 className="text-xl font-bold text-text mb-2">¡Plantilla Publicada!</h3>
-                    <p className="text-text-muted">Tu diseño ha pasado la moderación y ya está en la comunidad.</p>
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-surface border border-border rounded-xl w-[500px] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-[#121212] border border-white/10 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden relative"
+            >
+                {/* Close Button */}
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 text-zinc-400 hover:text-white transition-colors z-10"
+                >
+                    <X size={20} />
+                </button>
+
                 {/* Header */}
-                <div className="p-4 border-b border-border flex justify-between items-center bg-surface-highlight/30">
-                    <h2 className="text-lg font-bold text-text flex items-center gap-2">
-                        <Upload size={18} className="text-primary" />
-                        Publicar en Comunidad
-                    </h2>
-                    <button onClick={onClose} className="text-text-muted hover:text-text">
-                        <X size={20} />
-                    </button>
+                <div className="p-6 border-b border-white/5 bg-gradient-to-r from-zinc-900 to-[#121212]">
+                    <h2 className="text-xl font-bold text-white mb-1">Publicar en la Comunidad</h2>
+                    <p className="text-sm text-zinc-400">Comparte tu diseño con otros creadores.</p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-
-                    {/* Image Section */}
-                    <div className="space-y-2">
-                        <label className="text-xs font-semibold text-text block">Imagen de Portada (Miniatura)</label>
-
-                        <div className="border-2 border-dashed border-border rounded-lg p-4 flex flex-col items-center justify-center bg-surface-highlight/10 min-h-[160px] relative overflow-hidden group">
-                            {previewImage ? (
-                                <img src={previewImage} alt="Preview" className="absolute inset-0 w-full h-full object-cover" />
-                            ) : (
-                                <div className="text-center text-text-muted z-10 pointer-events-none">
-                                    <Image className="mx-auto mb-2 opacity-50" size={32} />
-                                    <p className="text-xs">Sube una imagen o captura la vista actual</p>
-                                </div>
-                            )}
-
-                            {/* Hover Overlay for Buttons if image exists, or always visible if not */}
-                            <div className={clsx("absolute inset-0 bg-black/40 flex items-center justify-center gap-2 transition-opacity z-20", previewImage ? "opacity-0 group-hover:opacity-100" : "opacity-100")}>
-
-                                <button
-                                    type="button"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="bg-white text-slate-800 px-3 py-1.5 rounded text-xs font-medium hover:bg-slate-100 flex items-center gap-2"
-                                >
-                                    <Upload size={14} /> Subir
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleCapture}
-                                    disabled={isCapturing}
-                                    className="bg-indigo-600 text-white px-3 py-1.5 rounded text-xs font-medium hover:bg-indigo-700 flex items-center gap-2"
-                                >
-                                    {isCapturing ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
-                                    {isCapturing ? 'Capturando...' : 'Capturar Vista'}
-                                </button>
-                            </div>
-
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                className="hidden"
-                                accept="image/png, image/jpeg"
-                                onChange={handleFileSelect}
-                            />
-                        </div>
-
-                        {/* Error Analysis */}
-                        {isAnalyzing && (
-                            <div className="text-xs text-blue-400 flex items-center gap-2 animate-pulse mt-1">
-                                <ShieldCheck size={12} /> Analizando contenido con IA (TensorFlow)...
-                            </div>
-                        )}
-
-                        {error && (
-                            <div className="bg-red-500/10 border border-red-500/20 text-red-500 text-xs p-2 rounded flex items-start gap-2">
-                                <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-                                <span>{error}</span>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Meta Fields */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-text">Título</label>
-                            <input
-                                type="text" name="title" required
-                                value={formData.title} onChange={handleInputChange}
-                                className="w-full p-2 text-xs bg-surface border border-border rounded focus:border-primary outline-none"
-                                placeholder="Ej. Tienda Minimalista"
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-text">Categoría</label>
-                            <select
-                                name="category"
-                                value={formData.category} onChange={handleInputChange}
-                                className="w-full p-2 text-xs bg-surface border border-border rounded focus:border-primary outline-none"
-                            >
-                                <option>E-commerce</option>
-                                <option>Blog</option>
-                                <option>Portfolio</option>
-                                <option>Landing Page</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-semibold text-text">Autor</label>
-                        <input
-                            type="text" name="author" required
-                            value={formData.author} onChange={handleInputChange}
-                            className="w-full p-2 text-xs bg-surface border border-border rounded focus:border-primary outline-none"
-                            placeholder="Tu Nombre o Nickname"
-                        />
-                    </div>
-
-                    <div className="pt-4 border-t border-border flex justify-end gap-2">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-4 py-2 text-xs font-medium text-text-muted hover:text-text"
+                {success ? (
+                    <div className="p-12 flex flex-col items-center justify-center text-center">
+                        <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            type="spring"
+                            className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mb-4 text-green-500"
                         >
-                            Cancelar
-                        </button>
+                            <CheckCircle size={32} />
+                        </motion.div>
+                        <h3 className="text-xl font-bold text-white mb-2">¡Plantilla Publicada!</h3>
+                        <p className="text-zinc-400">Tu diseño ya está visible para la comunidad.</p>
+                    </div>
+                ) : (
+                    <form onSubmit={handlePublish} className="p-6 space-y-6">
+                        {/* Title Input */}
+                        <div>
+                            <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">
+                                Nombre de la Plantilla
+                            </label>
+                            <input
+                                type="text"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                placeholder="Ej: Landing Page Cyberpunk"
+                                className="w-full bg-zinc-900/50 border border-zinc-800 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all"
+                            />
+                        </div>
+
+                        {/* Description Input */}
+                        <div>
+                            <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">
+                                Descripción
+                            </label>
+                            <textarea
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                placeholder="Describe tu diseño, para quién es ideal..."
+                                rows={3}
+                                className="w-full bg-zinc-900/50 border border-zinc-800 rounded-lg px-4 py-3 text-white placeholder-zinc-600 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all resize-none custom-scrollbar"
+                            />
+                        </div>
+
+                        {/* Image Upload */}
+                        <div>
+                            <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">
+                                Miniatura / Preview
+                            </label>
+                            <div className="relative group cursor-pointer">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleFileChange}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                                />
+                                <div className={clsx(
+                                    "border-2 border-dashed rounded-xl h-40 flex flex-col items-center justify-center transition-all overflow-hidden relative",
+                                    previewUrl ? "border-indigo-500/30 bg-zinc-900" : "border-zinc-800 bg-zinc-900/30 hover:bg-zinc-900/50 hover:border-zinc-700"
+                                )}>
+                                    {previewUrl ? (
+                                        <>
+                                            <img src={previewUrl} alt="Preview" className="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity" />
+                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="bg-black/80 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-2 border border-white/10">
+                                                    <Upload size={14} /> Cambiar Imagen
+                                                </div>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="text-center p-4 pointer-events-none">
+                                            <div className="w-12 h-12 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-3 text-zinc-500 group-hover:text-indigo-400 group-hover:bg-indigo-500/10 transition-colors">
+                                                <ImageIcon size={24} />
+                                            </div>
+                                            <p className="text-sm text-zinc-300 font-medium">Sube una imagen</p>
+                                            <p className="text-xs text-zinc-500 mt-1">PNG, JPG hasta 2MB</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Error Message */}
+                        <AnimatePresence>
+                            {error && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 p-3 rounded-lg flex items-center gap-2"
+                                >
+                                    <X size={14} className="shrink-0" /> <span className="flex-1">{error}</span>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        {/* Submit Button */}
                         <button
                             type="submit"
-                            disabled={isAnalyzing || !!error || !imageFile}
-                            className="bg-primary hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2"
+                            disabled={loading || !title || !thumbnail}
+                            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all group"
                         >
-                            {isAnalyzing ? 'Verificando...' : 'Publicar'}
+                            {loading ? (
+                                <>
+                                    <Loader2 className="animate-spin" size={20} />
+                                    Publicando...
+                                </>
+                            ) : (
+                                <>
+                                    Publicar Ahora
+                                </>
+                            )}
                         </button>
-                    </div>
-                </form>
-            </div>
+                    </form>
+                )}
+            </motion.div>
         </div>
     );
 };
