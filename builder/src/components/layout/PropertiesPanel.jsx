@@ -267,20 +267,11 @@ export const PropertiesPanel = () => {
                                 </label>
                                 <div className="flex gap-2 bg-surface-highlight p-1 rounded-lg border border-border">
                                     <button
-                                        onClick={() => updateProperty(selectedId, 'layoutMode', 'stack')}
-                                        className={clsx(
-                                            "flex-1 py-1.5 text-[10px] font-medium rounded transition-all flex items-center justify-center gap-1",
-                                            (!selectedNode.layoutMode || selectedNode.layoutMode === 'stack') ? "bg-white text-primary shadow-sm" : "text-text-muted hover:text-text"
-                                        )}
-                                    >
-                                        <AlignLeft size={12} /> Bloques (Stack)
-                                    </button>
-                                    <button
                                         onClick={() => updateProperty(selectedId, 'layoutMode', 'free')}
                                         className={clsx(
-                                            "flex-1 py-1.5 text-[10px] font-medium rounded transition-all flex items-center justify-center gap-1",
-                                            selectedNode.layoutMode === 'free' ? "bg-white text-primary shadow-sm" : "text-text-muted hover:text-text"
+                                            "flex-1 py-1.5 text-[10px] font-medium rounded transition-all flex items-center justify-center gap-1 bg-white text-primary shadow-sm"
                                         )}
+                                        disabled
                                     >
                                         <Layout size={12} /> Libre (Canvas)
                                     </button>

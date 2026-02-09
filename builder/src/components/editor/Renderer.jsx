@@ -125,6 +125,7 @@ const ElementWrapper = ({ node, children }) => {
             case 'heartBeat': return { visible: { scale: [1, 1.3, 1, 1.3, 1], transition: { repeat: Infinity, duration: 1.3 } } };
             // Marquee Effects
             case 'marquee-left': return {
+                hidden: { x: "0%" }, // Start from 0%
                 visible: {
                     x: ["0%", "-100%"],
                     transition: { repeat: Infinity, ease: "linear", duration: 10, repeatType: "loop" }
@@ -144,7 +145,14 @@ const ElementWrapper = ({ node, children }) => {
     const variants = animType ? getAnimationVariants(animType) : {};
 
     // Animation Config
-    const animDuration = animation.duration ? animation.duration / 1000 : 0.5;
+    let animDuration = animation.duration ? animation.duration / 1000 : 0.5;
+
+    // Safety check: specific legacy Marquee/Infinite fix
+    // If it's an infinite animation and duration is very low (e.g. user had 15ms stored), force a reasonable default.
+    const isInfinite = ['marquee-left', 'marquee-right', 'pulse', 'bounce', 'shake', 'heartBeat'].includes(animType);
+    if (isInfinite && animDuration < 1) {
+        animDuration = 10; // Force 10 seconds default if duration is broken
+    }
     const animDelay = animation.delay ? animation.delay / 1000 : 0;
 
     // AOS Props replacement
@@ -154,9 +162,14 @@ const ElementWrapper = ({ node, children }) => {
     const motionProps = animType ? {
         variants: variants,
         initial: "hidden",
-        whileInView: "visible",
-        viewport: { once: false, amount: 0.2 }, // Re-animate every time
-        transition: hasOwnTransition ? undefined : {
+        // For infinite animations, use 'animate' to run immediately and continuously.
+        // For scroll animations, use 'whileInView'.
+        [isInfinite ? 'animate' : 'whileInView']: "visible",
+        viewport: isInfinite ? undefined : { once: false, amount: 0.2 },
+        transition: hasOwnTransition ? {
+            ...variants.visible.transition,
+            duration: animDuration || variants.visible.transition.duration // Allow overriding duration
+        } : {
             duration: animDuration,
             delay: animDelay,
             ease: "easeOut"
@@ -488,6 +501,9 @@ const ElementWrapper = ({ node, children }) => {
             )}
             style={{
                 ...styles,
+                // Explicitly ensure transform is passed and not overridden/ignored, 
+                // BUT only if it has a value, otherwise let Framer handle it.
+                ...(styles.transform ? { transform: styles.transform } : {}),
                 boxShadow: dropPosition ? '0 0 0 2px #6366f1' : (isSelected ? undefined : 'none')
             }}
         >

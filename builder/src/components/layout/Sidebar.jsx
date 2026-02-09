@@ -162,13 +162,15 @@ export const Sidebar = ({ onShowSettings, onShowTemplates, onShowIconPicker }) =
 
                     {/* Component Categories */}
                     <div className="pb-4">
-                        <SidebarCategory title="Navegación" defaultOpen={true}>
+                        <SidebarCategory title="Estructura" defaultOpen={true}>
+                            <DraggableItem type="section" icon={<LucideIcons.Square />} label="Sección" description="Contenedor de ancho completo." variant="blue" />
                             <DraggableItem type="header" icon={<LucideIcons.PanelTop />} label="Header" description="Barra superior con logo y links." variant="blue" />
                             <DraggableItem type="footer" icon={<LucideIcons.PanelBottom />} label="Footer" description="Pie de página oscuro." variant="blue" />
                         </SidebarCategory>
 
                         <SidebarCategory title="Básicos" defaultOpen={true}>
                             <DraggableItem type="text" icon={<Type />} label="Texto" variant="blue" />
+                            <DraggableItem type="marquee" icon={<LucideIcons.MoveHorizontal />} label="Marquesina" description="Texto infinito" variant="blue" />
                             <DraggableItem type="image" icon={<Image />} label="Imagen" variant="blue" />
                             <DraggableItem type="video" icon={<Video />} label="Video" variant="blue" />
                             <DraggableItem type="button" icon={<RectangleHorizontal />} label="Botón" variant="blue" />

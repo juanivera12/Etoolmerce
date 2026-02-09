@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Layout, MousePointer2, Settings, Zap } from 'lucide-react';
+import { X, Layout, MousePointer2, Settings, Zap, Code } from 'lucide-react';
 import { useEditorStore } from '../../store/useEditorStore';
 
 export const TutorialOverlay = () => {
@@ -59,16 +59,29 @@ export const TutorialOverlay = () => {
                         </div>
                     </div>
 
-                    <div className="pt-4">
-                        <button
-                            onClick={toggleTutorial}
-                            className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-extrabold py-4 rounded-2xl transition-all shadow-lg shadow-yellow-500/20 active:scale-[0.98]"
-                        >
-                            ¡EMPEZAR A CREAR!
-                        </button>
+                    <div className="flex gap-5">
+                        <div className="w-12 h-12 rounded-xl bg-zinc-800 flex items-center justify-center text-yellow-500 shrink-0">
+                            <Code size={24} />
+                        </div>
+                        <div>
+                            <h3 className="text-white font-semibold">Exportar y Ejecutar</h3>
+                            <p className="text-sm text-zinc-500 leading-relaxed">
+                                Al descargar tu código, recuerda que necesitarás <b>Visual Studio Code</b> (o similar) para ejecutar el proyecto en tu computadora.
+                            </p>
+                        </div>
                     </div>
+                </div>
+
+                <div className="pt-4">
+                    <button
+                        onClick={toggleTutorial}
+                        className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-extrabold py-4 rounded-2xl transition-all shadow-lg shadow-yellow-500/20 active:scale-[0.98]"
+                    >
+                        ¡EMPEZAR A CREAR!
+                    </button>
                 </div>
             </div>
         </div>
+
     );
 };

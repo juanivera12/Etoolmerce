@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 
 const createPage = (name, isHome = false) => ({
@@ -109,6 +110,7 @@ const createNode = (type, customStyles = {}) => {
         id,
         type,
         className: '',
+        layoutMode: 'free', // Default to Free (Canvas) mode
         styles: {
             padding: "10px",
             ...baseStyles,
@@ -164,6 +166,45 @@ const createNode = (type, customStyles = {}) => {
                     }
                 ]
             };
+
+        case 'marquee':
+            return {
+                id,
+                type: 'section', // It's a section wrapper
+                layoutMode: 'free',
+                styles: {
+                    width: '100%',
+                    padding: '20px 0',
+                    backgroundColor: '#000000',
+                    overflow: 'hidden',
+                    whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'flex-start',
+                    ...baseStyles,
+                    ...customStyles
+                },
+                children: [
+                    {
+                        id: `${id}-text`,
+                        type: 'text',
+                        content: 'TEXTO EN MOVIMIENTO • MARQUESINA AUTOMÁTICA • ',
+                        styles: {
+                            fontSize: 'clamp(2rem, 5vw, 4rem)',
+                            fontWeight: 'bold',
+                            color: '#ffffff',
+                            whiteSpace: 'nowrap'
+                        },
+                        animation: {
+                            type: 'marquee-left',
+                            duration: 15000, // 15 seconds (Renderer divides by 1000)
+                            repeat: Infinity,
+                            ease: "linear"
+                        }
+                    }
+                ]
+            };
+
         case 'section':
         case 'container':
             return {
@@ -1547,451 +1588,462 @@ export const selectActivePageContent = (state) => {
     return state.pages.find(p => p.id === state.activePageId)?.content || null;
 };
 
-export const useEditorStore = create((set, get) => ({
-    pages: [initialHome],
-    activePageId: initialHome.id,
+export const useEditorStore = create(
+    persist(
+        (set, get) => ({
+            pages: [initialHome],
+            activePageId: initialHome.id,
 
-    selectedId: null,
-    activeTool: 'select', // 'select', 'hand', 'multiselect'
-    isPreviewMode: false,
-    viewMode: 'desktop',
-    isTutorialActive: false,
+            selectedId: null,
+            activeTool: 'select', // 'select', 'hand', 'multiselect'
+            isPreviewMode: false,
+            viewMode: 'desktop',
+            isTutorialActive: false,
 
-    // Global Drag State (Free Flow Fix)
-    isDragging: false,
-    draggedId: null,
-    setIsDragging: (isDragging, id = null) => set({ isDragging, draggedId: id }),
+            // Global Drag State (Free Flow Fix)
+            isDragging: false,
+            draggedId: null,
+            setIsDragging: (isDragging, id = null) => set({ isDragging, draggedId: id }),
 
-    setTool: (tool) => set({ activeTool: tool }),
-    setViewMode: (mode) => set({ viewMode: mode }),
-
-
-    projectConfig: {
-        targetFramework: 'html',
-    },
-
-    setProjectConfig: (config) => set((state) => ({
-        projectConfig: { ...state.projectConfig, ...config }
-    })),
+            setTool: (tool) => set({ activeTool: tool }),
+            setViewMode: (mode) => set({ viewMode: mode }),
 
 
+            projectConfig: {
+                targetFramework: 'html',
+            },
 
-    addPage: (name) => set((state) => {
-        const newPage = createPage(name);
-        return {
-            pages: [...state.pages, newPage],
-            activePageId: newPage.id,
-            selectedId: null
-        };
-    }),
-
-    setActivePage: (pageId) => set({ activePageId: pageId, selectedId: null }),
-
-    deletePage: (pageId) => set((state) => {
-        if (state.pages.length <= 1) return state;
-        const newPages = state.pages.filter(p => p.id !== pageId);
-        return {
-            pages: newPages,
-            activePageId: state.activePageId === pageId ? newPages[0].id : state.activePageId,
-            selectedId: null
-        };
-    }),
-
-    renamePage: (pageId, newName) => set((state) => ({
-        pages: state.pages.map(p => p.id === pageId ? { ...p, name: newName, slug: newName.toLowerCase().replace(/\s+/g, '-') } : p)
-    })),
+            setProjectConfig: (config) => set((state) => ({
+                projectConfig: { ...state.projectConfig, ...config }
+            })),
 
 
 
-
-    selectElement: (id) => set({ selectedId: id }),
-    togglePreview: () => set((state) => ({ isPreviewMode: !state.isPreviewMode })),
-    toggleTutorial: () => set((state) => ({ isTutorialActive: !state.isTutorialActive })),
-
-    updateStyles: (id, newStyles) => set((state) => {
-        get().addToHistory();
-        const activePage = state.pages.find(p => p.id === state.activePageId);
-        if (!activePage) return state;
-
-        const updatedContent = updateNode(activePage.content, id, (node) => ({
-            ...node,
-            styles: { ...node.styles, ...newStyles }
-        }));
-
-        return {
-            pages: state.pages.map(p => p.id === state.activePageId ? { ...p, content: updatedContent } : p)
-        };
-    }),
-
-    updateContent: (id, newContent) => set((state) => {
-        get().addToHistory();
-        const activePage = state.pages.find(p => p.id === state.activePageId);
-        if (!activePage) return state;
-
-        const updatedContent = updateNode(activePage.content, id, (node) => ({
-            ...node,
-            content: newContent
-        }));
-
-        return {
-            pages: state.pages.map(p => p.id === state.activePageId ? { ...p, content: updatedContent } : p)
-        };
-    }),
-
-    updateProperty: (id, key, value) => set((state) => {
-        const activePage = state.pages.find(p => p.id === state.activePageId);
-        if (!activePage) return state;
-
-        const updatedContent = updateNode(activePage.content, id, (node) => ({
-            ...node,
-            [key]: value
-        }));
-
-        return {
-            pages: state.pages.map(p => p.id === state.activePageId ? { ...p, content: updatedContent } : p)
-        };
-    }),
-
-    removeElement: (id) => set((state) => {
-        get().addToHistory();
-        const activePage = state.pages.find(p => p.id === state.activePageId);
-        if (!activePage) return state;
-
-        const removeNode = (node, targetId) => {
-            if (node.children) {
+            addPage: (name) => set((state) => {
+                const newPage = createPage(name);
                 return {
+                    pages: [...state.pages, newPage],
+                    activePageId: newPage.id,
+                    selectedId: null
+                };
+            }),
+
+            setActivePage: (pageId) => set({ activePageId: pageId, selectedId: null }),
+
+            deletePage: (pageId) => set((state) => {
+                if (state.pages.length <= 1) return state;
+                const newPages = state.pages.filter(p => p.id !== pageId);
+                return {
+                    pages: newPages,
+                    activePageId: state.activePageId === pageId ? newPages[0].id : state.activePageId,
+                    selectedId: null
+                };
+            }),
+
+            renamePage: (pageId, newName) => set((state) => ({
+                pages: state.pages.map(p => p.id === pageId ? { ...p, name: newName, slug: newName.toLowerCase().replace(/\s+/g, '-') } : p)
+            })),
+
+
+
+
+            selectElement: (id) => set({ selectedId: id }),
+            togglePreview: () => set((state) => ({ isPreviewMode: !state.isPreviewMode })),
+            toggleTutorial: () => set((state) => ({ isTutorialActive: !state.isTutorialActive })),
+
+            updateStyles: (id, newStyles) => set((state) => {
+                get().addToHistory();
+                const activePage = state.pages.find(p => p.id === state.activePageId);
+                if (!activePage) return state;
+
+                const updatedContent = updateNode(activePage.content, id, (node) => ({
                     ...node,
-                    children: node.children
-                        .filter(child => child.id !== targetId)
-                        .map(child => removeNode(child, targetId))
+                    styles: { ...node.styles, ...newStyles }
+                }));
+
+                return {
+                    pages: state.pages.map(p => p.id === state.activePageId ? { ...p, content: updatedContent } : p)
                 };
-            }
-            return node;
-        };
+            }),
 
-        const updatedContent = removeNode(activePage.content, id);
-        return {
-            pages: state.pages.map(p => p.id === state.activePageId ? { ...p, content: updatedContent } : p),
-            selectedId: null
-        };
-    }),
+            updateContent: (id, newContent) => set((state) => {
+                get().addToHistory();
+                const activePage = state.pages.find(p => p.id === state.activePageId);
+                if (!activePage) return state;
 
-    addElement: (parentId, type, customStyles = {}) => set((state) => {
-        get().addToHistory();
-        const activePage = state.pages.find(p => p.id === state.activePageId);
-        if (!activePage) return state;
+                const updatedContent = updateNode(activePage.content, id, (node) => ({
+                    ...node,
+                    content: newContent
+                }));
 
-
-        let targetId = parentId;
-        if (type === 'header' || type === 'footer') {
-            targetId = activePage.content.id;
-        }
-
-        const updatedContent = updateNode(activePage.content, targetId, (node) => {
-            // If absolute, ensure width is not 100% to avoid overflow/invisibility
-            const isAbsolute = customStyles.position === 'absolute';
-
-            if (type === 'header' || type === 'footer') {
-                customStyles = { ...customStyles, position: 'relative', width: '100%' }; // Headers always full width relative
-            } else if (isAbsolute && (type === 'container' || type === 'section')) {
-                customStyles = {
-                    ...customStyles,
-                    width: '300px', // Default box size for drag
-                    height: '200px',
-                    minHeight: '200px',
-                    backgroundColor: '#f8fafc', // Light gray background so it's visible on black
-                    border: '1px dashed #cbd5e1'
+                return {
+                    pages: state.pages.map(p => p.id === state.activePageId ? { ...p, content: updatedContent } : p)
                 };
-            } else if (isAbsolute && (type === 'text' || type === 'typewriter')) {
-                customStyles = { ...customStyles, width: 'auto', minWidth: '100px' };
-            }
+            }),
 
-            const newNode = createNode(type, customStyles);
-            let newChildren = [...(node.children || [])];
+            updateProperty: (id, key, value) => set((state) => {
+                const activePage = state.pages.find(p => p.id === state.activePageId);
+                if (!activePage) return state;
 
-            if (type === 'header') {
-                newChildren.unshift(newNode);
-            } else if (type === 'footer') {
-                newChildren.push(newNode);
-            } else {
-                const footerIndex = newChildren.findIndex(c => c.type === 'footer');
-                if (footerIndex !== -1) {
-                    newChildren.splice(footerIndex, 0, newNode);
+                const updatedContent = updateNode(activePage.content, id, (node) => ({
+                    ...node,
+                    [key]: value
+                }));
+
+                return {
+                    pages: state.pages.map(p => p.id === state.activePageId ? { ...p, content: updatedContent } : p)
+                };
+            }),
+
+            removeElement: (id) => set((state) => {
+                get().addToHistory();
+                const activePage = state.pages.find(p => p.id === state.activePageId);
+                if (!activePage) return state;
+
+                const removeNode = (node, targetId) => {
+                    if (node.children) {
+                        return {
+                            ...node,
+                            children: node.children
+                                .filter(child => child.id !== targetId)
+                                .map(child => removeNode(child, targetId))
+                        };
+                    }
+                    return node;
+                };
+
+                const updatedContent = removeNode(activePage.content, id);
+                return {
+                    pages: state.pages.map(p => p.id === state.activePageId ? { ...p, content: updatedContent } : p),
+                    selectedId: null
+                };
+            }),
+
+            addElement: (parentId, type, customStyles = {}) => set((state) => {
+                get().addToHistory();
+                const activePage = state.pages.find(p => p.id === state.activePageId);
+                if (!activePage) return state;
+
+
+                let targetId = parentId;
+                if (type === 'header' || type === 'footer') {
+                    targetId = activePage.content.id;
+                }
+
+                const updatedContent = updateNode(activePage.content, targetId, (node) => {
+                    // If absolute, ensure width is not 100% to avoid overflow/invisibility
+                    const isAbsolute = customStyles.position === 'absolute';
+
+                    if (type === 'header' || type === 'footer') {
+                        customStyles = { ...customStyles, position: 'relative', width: '100%' }; // Headers always full width relative
+                    } else if (isAbsolute && (type === 'container' || type === 'section')) {
+                        customStyles = {
+                            ...customStyles,
+                            width: '300px', // Default box size for drag
+                            height: '200px',
+                            minHeight: '200px',
+                            backgroundColor: '#f8fafc', // Light gray background so it's visible on black
+                            border: '1px dashed #cbd5e1'
+                        };
+                    } else if (isAbsolute && (type === 'text' || type === 'typewriter')) {
+                        customStyles = { ...customStyles, width: 'auto', minWidth: '100px' };
+                    }
+
+                    const newNode = createNode(type, customStyles);
+                    let newChildren = [...(node.children || [])];
+
+                    if (type === 'header') {
+                        newChildren.unshift(newNode);
+                    } else if (type === 'footer') {
+                        newChildren.push(newNode);
+                    } else {
+                        const footerIndex = newChildren.findIndex(c => c.type === 'footer');
+                        if (footerIndex !== -1) {
+                            newChildren.splice(footerIndex, 0, newNode);
+                        } else {
+                            newChildren.push(newNode);
+                        }
+                    }
+
+                    return {
+                        ...node,
+                        children: newChildren
+                    };
+                });
+
+                return {
+                    pages: state.pages.map(p => p.id === state.activePageId ? { ...p, content: updatedContent } : p)
+                };
+            }),
+
+            addImageElement: (parentId, imageUrl) => set((state) => {
+                get().addToHistory();
+                const activePage = state.pages.find(p => p.id === state.activePageId);
+                if (!activePage) return state;
+
+                const updatedContent = updateNode(activePage.content, parentId, (node) => {
+                    const newNode = createNode('image');
+                    newNode.content = imageUrl;
+                    return {
+                        ...node,
+                        children: [...(node.children || []), newNode]
+                    };
+                });
+
+                return {
+                    pages: state.pages.map(p => p.id === state.activePageId ? { ...p, content: updatedContent } : p)
+                };
+            }),
+
+            moveElement: (draggedId, targetId, position) => set((state) => {
+                get().addToHistory();
+                const activePage = state.pages.find(p => p.id === state.activePageId);
+                if (!activePage) return state;
+
+
+                const findNodeAndParent = (node, id, parent = null) => {
+                    if (node.id === id) return { node, parent };
+                    if (node.children) {
+                        for (const child of node.children) {
+                            const result = findNodeAndParent(child, id, node);
+                            if (result) return result;
+                        }
+                    }
+                    return null;
+                };
+
+                const pageContent = activePage.content;
+                const draggedData = findNodeAndParent(pageContent, draggedId);
+                const targetData = findNodeAndParent(pageContent, targetId);
+
+                if (!draggedData || !targetData) return state;
+
+                const { node: draggedNode, parent: oldParent } = draggedData;
+                const { node: targetNode, parent: targetParent } = targetData;
+
+
+
+
+                const clonedContent = JSON.parse(JSON.stringify(activePage.content));
+
+
+                const findInClone = (node, id) => {
+                    if (node.id === id) return node;
+                    if (node.children) {
+                        for (const child of node.children) {
+                            const found = findInClone(child, id);
+                            if (found) return found;
+                        }
+                    }
+                    return null;
+                };
+                const findParentInClone = (node, id) => {
+                    if (node.children && node.children.some(c => c.id === id)) return node;
+                    if (node.children) {
+                        for (const child of node.children) {
+                            const found = findParentInClone(child, id);
+                            if (found) return found;
+                        }
+                    }
+                    return null;
+                }
+
+                const draggedNodeClone = findInClone(clonedContent, draggedId);
+                const oldParentClone = findParentInClone(clonedContent, draggedId);
+
+                if (!draggedNodeClone || !oldParentClone) return state;
+
+
+                oldParentClone.children = oldParentClone.children.filter(c => c.id !== draggedId);
+
+
+
+
+
+
+
+
+
+
+
+
+                if (position === 'inside') {
+                    const newParentClone = findInClone(clonedContent, targetId);
+                    if (newParentClone) {
+                        if (!newParentClone.children) newParentClone.children = [];
+                        newParentClone.children.push(draggedNodeClone);
+                    }
                 } else {
-                    newChildren.push(newNode);
+
+
+
+
+                    const newParentClone = findParentInClone(clonedContent, targetId);
+                    if (newParentClone) {
+                        const targetIndex = newParentClone.children.findIndex(c => c.id === targetId);
+                        const insertIndex = position === 'after' ? targetIndex + 1 : targetIndex;
+                        newParentClone.children.splice(insertIndex, 0, draggedNodeClone);
+                    }
                 }
-            }
 
-            return {
-                ...node,
-                children: newChildren
-            };
-        });
-
-        return {
-            pages: state.pages.map(p => p.id === state.activePageId ? { ...p, content: updatedContent } : p)
-        };
-    }),
-
-    addImageElement: (parentId, imageUrl) => set((state) => {
-        get().addToHistory();
-        const activePage = state.pages.find(p => p.id === state.activePageId);
-        if (!activePage) return state;
-
-        const updatedContent = updateNode(activePage.content, parentId, (node) => {
-            const newNode = createNode('image');
-            newNode.content = imageUrl;
-            return {
-                ...node,
-                children: [...(node.children || []), newNode]
-            };
-        });
-
-        return {
-            pages: state.pages.map(p => p.id === state.activePageId ? { ...p, content: updatedContent } : p)
-        };
-    }),
-
-    moveElement: (draggedId, targetId, position) => set((state) => {
-        get().addToHistory();
-        const activePage = state.pages.find(p => p.id === state.activePageId);
-        if (!activePage) return state;
+                return {
+                    pages: state.pages.map(p => p.id === state.activePageId ? { ...p, content: clonedContent } : p)
+                };
+            }),
 
 
-        const findNodeAndParent = (node, id, parent = null) => {
-            if (node.id === id) return { node, parent };
-            if (node.children) {
-                for (const child of node.children) {
-                    const result = findNodeAndParent(child, id, node);
-                    if (result) return result;
+            reparentElement: (draggedId, newParentId) => get().moveElement(draggedId, newParentId, 'inside'),
+
+
+            past: [],
+            future: [],
+            clipboard: null,
+
+            addToHistory: () => {
+                set((state) => {
+                    const currentContent = JSON.parse(JSON.stringify(state.pages.find(p => p.id === state.activePageId).content));
+
+                    const newPast = [...state.past, currentContent].slice(-50);
+                    return {
+                        past: newPast,
+                        future: []
+                    };
+                });
+            },
+
+            undo: () => {
+                set((state) => {
+                    if (state.past.length === 0) return state;
+                    const previous = state.past[state.past.length - 1];
+                    const newPast = state.past.slice(0, -1);
+
+
+
+                    const current = JSON.parse(JSON.stringify(state.pages.find(p => p.id === state.activePageId).content));
+
+                    const updatedPages = state.pages.map(p => p.id === state.activePageId ? { ...p, content: previous } : p);
+
+                    return {
+                        past: newPast,
+                        future: [current, ...state.future],
+                        pages: updatedPages,
+                        selectedId: null
+                    };
+                });
+            },
+
+            redo: () => {
+                set((state) => {
+                    if (state.future.length === 0) return state;
+                    const next = state.future[0];
+                    const newFuture = state.future.slice(1);
+
+                    const current = JSON.parse(JSON.stringify(state.pages.find(p => p.id === state.activePageId).content));
+
+                    const updatedPages = state.pages.map(p => p.id === state.activePageId ? { ...p, content: next } : p);
+
+                    return {
+                        past: [...state.past, current],
+                        future: newFuture,
+                        pages: updatedPages,
+                        selectedId: null
+                    };
+                });
+            },
+
+            copy: () => {
+                const state = get();
+                if (!state.selectedId) return;
+
+
+                const findNode = (node, id) => {
+                    if (node.id === id) return node;
+                    if (node.children) {
+                        for (const child of node.children) {
+                            const found = findNode(child, id);
+                            if (found) return found;
+                        }
+                    }
+                    return null;
+                };
+
+                const activePage = state.pages.find(p => p.id === state.activePageId);
+                const nodeToCopy = findNode(activePage.content, state.selectedId);
+
+                if (nodeToCopy && nodeToCopy.type !== 'page') {
+                    set({ clipboard: JSON.parse(JSON.stringify(nodeToCopy)) });
                 }
-            }
-            return null;
-        };
+            },
 
-        const pageContent = activePage.content;
-        const draggedData = findNodeAndParent(pageContent, draggedId);
-        const targetData = findNodeAndParent(pageContent, targetId);
+            paste: () => {
+                const state = get();
+                if (!state.clipboard) return;
 
-        if (!draggedData || !targetData) return state;
+                state.addToHistory();
 
-        const { node: draggedNode, parent: oldParent } = draggedData;
-        const { node: targetNode, parent: targetParent } = targetData;
+                const regenerateIds = (node) => {
+                    const newNode = { ...node };
+                    newNode.id = `${newNode.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                    if (newNode.children) {
+                        newNode.children = newNode.children.map(regenerateIds);
+                    }
+                    return newNode;
+                };
+
+                const clonedNode = regenerateIds(state.clipboard);
 
 
-
-
-        const clonedContent = JSON.parse(JSON.stringify(activePage.content));
-
-
-        const findInClone = (node, id) => {
-            if (node.id === id) return node;
-            if (node.children) {
-                for (const child of node.children) {
-                    const found = findInClone(child, id);
-                    if (found) return found;
+                if (clonedNode.styles?.position === 'absolute') {
+                    const oldLeft = parseFloat(clonedNode.styles.left) || 0;
+                    const oldTop = parseFloat(clonedNode.styles.top) || 0;
+                    clonedNode.styles.left = `${oldLeft + 20}px`;
+                    clonedNode.styles.top = `${oldTop + 20}px`;
                 }
-            }
-            return null;
-        };
-        const findParentInClone = (node, id) => {
-            if (node.children && node.children.some(c => c.id === id)) return node;
-            if (node.children) {
-                for (const child of node.children) {
-                    const found = findParentInClone(child, id);
-                    if (found) return found;
-                }
-            }
-            return null;
+
+
+
+
+                const activePage = state.pages.find(p => p.id === state.activePageId);
+
+                const updatedContent = {
+                    ...activePage.content,
+                    children: [...(activePage.content.children || []), clonedNode]
+                };
+
+                set({
+                    pages: state.pages.map(p => p.id === state.activePageId ? { ...p, content: updatedContent } : p),
+                    selectedId: clonedNode.id
+                });
+            },
+
+            loadTemplate: (templateContent) => set((state) => {
+                get().addToHistory();
+                const activePage = state.pages.find(p => p.id === state.activePageId);
+                if (!activePage) return state;
+
+                const regenerateIds = (node) => {
+                    const newNode = { ...node };
+                    newNode.id = `${newNode.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                    if (newNode.children) {
+                        newNode.children = newNode.children.map(regenerateIds);
+                    }
+                    return newNode;
+                };
+
+                const newContent = regenerateIds(templateContent);
+
+                return {
+                    pages: state.pages.map(p => p.id === state.activePageId ? { ...p, content: newContent } : p),
+                    selectedId: null
+                };
+            }),
+        }),
+        {
+            name: 'etoolmerce-storage',
+            partialize: (state) => ({
+                pages: state.pages,
+                activePageId: state.activePageId,
+                projectConfig: state.projectConfig
+            })
         }
-
-        const draggedNodeClone = findInClone(clonedContent, draggedId);
-        const oldParentClone = findParentInClone(clonedContent, draggedId);
-
-        if (!draggedNodeClone || !oldParentClone) return state;
-
-
-        oldParentClone.children = oldParentClone.children.filter(c => c.id !== draggedId);
-
-
-
-
-
-
-
-
-
-
-
-
-        if (position === 'inside') {
-            const newParentClone = findInClone(clonedContent, targetId);
-            if (newParentClone) {
-                if (!newParentClone.children) newParentClone.children = [];
-                newParentClone.children.push(draggedNodeClone);
-            }
-        } else {
-
-
-
-
-            const newParentClone = findParentInClone(clonedContent, targetId);
-            if (newParentClone) {
-                const targetIndex = newParentClone.children.findIndex(c => c.id === targetId);
-                const insertIndex = position === 'after' ? targetIndex + 1 : targetIndex;
-                newParentClone.children.splice(insertIndex, 0, draggedNodeClone);
-            }
-        }
-
-        return {
-            pages: state.pages.map(p => p.id === state.activePageId ? { ...p, content: clonedContent } : p)
-        };
-    }),
-
-
-    reparentElement: (draggedId, newParentId) => get().moveElement(draggedId, newParentId, 'inside'),
-
-
-    past: [],
-    future: [],
-    clipboard: null,
-
-    addToHistory: () => {
-        set((state) => {
-            const currentContent = JSON.parse(JSON.stringify(state.pages.find(p => p.id === state.activePageId).content));
-
-            const newPast = [...state.past, currentContent].slice(-50);
-            return {
-                past: newPast,
-                future: []
-            };
-        });
-    },
-
-    undo: () => {
-        set((state) => {
-            if (state.past.length === 0) return state;
-            const previous = state.past[state.past.length - 1];
-            const newPast = state.past.slice(0, -1);
-
-
-
-            const current = JSON.parse(JSON.stringify(state.pages.find(p => p.id === state.activePageId).content));
-
-            const updatedPages = state.pages.map(p => p.id === state.activePageId ? { ...p, content: previous } : p);
-
-            return {
-                past: newPast,
-                future: [current, ...state.future],
-                pages: updatedPages,
-                selectedId: null
-            };
-        });
-    },
-
-    redo: () => {
-        set((state) => {
-            if (state.future.length === 0) return state;
-            const next = state.future[0];
-            const newFuture = state.future.slice(1);
-
-            const current = JSON.parse(JSON.stringify(state.pages.find(p => p.id === state.activePageId).content));
-
-            const updatedPages = state.pages.map(p => p.id === state.activePageId ? { ...p, content: next } : p);
-
-            return {
-                past: [...state.past, current],
-                future: newFuture,
-                pages: updatedPages,
-                selectedId: null
-            };
-        });
-    },
-
-    copy: () => {
-        const state = get();
-        if (!state.selectedId) return;
-
-
-        const findNode = (node, id) => {
-            if (node.id === id) return node;
-            if (node.children) {
-                for (const child of node.children) {
-                    const found = findNode(child, id);
-                    if (found) return found;
-                }
-            }
-            return null;
-        };
-
-        const activePage = state.pages.find(p => p.id === state.activePageId);
-        const nodeToCopy = findNode(activePage.content, state.selectedId);
-
-        if (nodeToCopy && nodeToCopy.type !== 'page') {
-            set({ clipboard: JSON.parse(JSON.stringify(nodeToCopy)) });
-        }
-    },
-
-    paste: () => {
-        const state = get();
-        if (!state.clipboard) return;
-
-        state.addToHistory();
-
-        const regenerateIds = (node) => {
-            const newNode = { ...node };
-            newNode.id = `${newNode.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-            if (newNode.children) {
-                newNode.children = newNode.children.map(regenerateIds);
-            }
-            return newNode;
-        };
-
-        const clonedNode = regenerateIds(state.clipboard);
-
-
-        if (clonedNode.styles?.position === 'absolute') {
-            const oldLeft = parseFloat(clonedNode.styles.left) || 0;
-            const oldTop = parseFloat(clonedNode.styles.top) || 0;
-            clonedNode.styles.left = `${oldLeft + 20}px`;
-            clonedNode.styles.top = `${oldTop + 20}px`;
-        }
-
-
-
-
-        const activePage = state.pages.find(p => p.id === state.activePageId);
-
-        const updatedContent = {
-            ...activePage.content,
-            children: [...(activePage.content.children || []), clonedNode]
-        };
-
-        set({
-            pages: state.pages.map(p => p.id === state.activePageId ? { ...p, content: updatedContent } : p),
-            selectedId: clonedNode.id
-        });
-    },
-
-    loadTemplate: (templateContent) => set((state) => {
-        get().addToHistory();
-        const activePage = state.pages.find(p => p.id === state.activePageId);
-        if (!activePage) return state;
-
-        const regenerateIds = (node) => {
-            const newNode = { ...node };
-            newNode.id = `${newNode.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-            if (newNode.children) {
-                newNode.children = newNode.children.map(regenerateIds);
-            }
-            return newNode;
-        };
-
-        const newContent = regenerateIds(templateContent);
-
-        return {
-            pages: state.pages.map(p => p.id === state.activePageId ? { ...p, content: newContent } : p),
-            selectedId: null
-        };
-    }),
-}));
+    ));

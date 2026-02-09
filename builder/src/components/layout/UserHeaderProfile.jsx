@@ -7,6 +7,7 @@ const UserHeaderProfile = () => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
+    const [imageError, setImageError] = useState(false);
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -30,6 +31,8 @@ const UserHeaderProfile = () => {
         user_metadata: { full_name: 'Usuario Demo' }
     };
 
+
+
     // Extract Display Name
     const meta = currentUser.user_metadata || {};
     const displayName = meta.full_name || meta.name || currentUser.email?.split('@')[0] || "Creativo";
@@ -38,11 +41,12 @@ const UserHeaderProfile = () => {
     return (
         <div className="flex items-center gap-3 px-3 py-1.5 rounded-full bg-surface border border-border shadow-sm transition-all hover:bg-surface-highlight">
             {/* Avatar or Icon */}
-            {avatarUrl ? (
+            {avatarUrl && !imageError ? (
                 <img
                     src={avatarUrl}
                     alt="User Avatar"
                     className="w-8 h-8 rounded-full border border-border object-cover"
+                    onError={() => setImageError(true)}
                 />
             ) : (
                 <div className="w-8 h-8 rounded-full bg-surface-highlight flex items-center justify-center border border-border">
