@@ -15,10 +15,14 @@ import { CarouselBlock } from '../blocks/CarouselBlock';
 // import AOS from 'aos';
 // import 'aos/dist/aos.css';
 
-import { useRelativeMouse } from '../../hooks/useRelativeMouse';
+
 import { QuickLayerToolbar } from './QuickLayerToolbar';
 import { ThreeDGalleryBlock } from '../blocks/ThreeDGalleryBlock';
+import { CountdownBlock } from '../blocks/CountdownBlock';
+import { FlashOfferBlock } from '../blocks/FlashOfferBlock';
 import TypewriterText from '../ui/TypewriterText';
+
+
 
 // Simple Error Boundary Component
 // Enhanced Error Boundary
@@ -87,22 +91,7 @@ const ElementWrapper = ({ node, children }) => {
         }
     }, [animation.type, isPreviewMode]);
 
-    // --- Ambient & Interactive Backgrounds ---
-    // using safe backgroundConfig
 
-    // 1. Interactive Spotlight Hook
-    // Requires ref to the element (nodeRef)
-    useRelativeMouse(nodeRef, backgroundConfig.spotlightEnabled);
-
-    // 2. Ambient Classes
-    const ambientClass = {
-        'pulse': 'animate-radial-pulse',
-        'aurora': 'animate-aurora',
-        'noise': 'animate-noise'
-    }[backgroundConfig.ambientType];
-
-    const spotlightClass = backgroundConfig.spotlightEnabled ? 'bg-interactive-spotlight' : '';
-    // ----------------------------------------
 
     // Hover Animation Props (Preview Only)
     const hoverProps = isPreviewMode ? {
@@ -183,11 +172,45 @@ const ElementWrapper = ({ node, children }) => {
     }
 
     const isSelected = selectedId === node.id && !isPreviewMode;
+    const { activeTool } = useEditorStore();
     const [dropPosition, setDropPosition] = useState(null);
     const [activeDropZone, setActiveDropZone] = useState(null);
+    const [isPanning, setIsPanning] = useState(false);
     // nodeRef initialized above
 
+    // PANNING LOGIC (Hand Tool)
+    React.useEffect(() => {
+        if (activeTool !== 'hand' || node.type !== 'page' || !isPanning) return;
+
+        const handleGlobalMouseMove = (e) => {
+            window.scrollBy(-e.movementX, -e.movementY);
+        };
+
+        const handleGlobalMouseUp = () => {
+            setIsPanning(false);
+        };
+
+        window.addEventListener('mousemove', handleGlobalMouseMove);
+        window.addEventListener('mouseup', handleGlobalMouseUp);
+
+        return () => {
+            window.removeEventListener('mousemove', handleGlobalMouseMove);
+            window.removeEventListener('mouseup', handleGlobalMouseUp);
+        };
+    }, [activeTool, node.type, isPanning]);
+
+    const handleMouseDown = (e) => {
+        if (activeTool === 'hand') {
+            e.preventDefault(); // Prevent text selection
+            e.stopPropagation();
+            setIsPanning(true);
+            return;
+        }
+    };
+
     const handleClick = (e) => {
+        if (activeTool === 'hand') return; // Ignore clicks if panning
+
         if (isPreviewMode) {
             // Handle Interaction in Preview Mode
             if (node.interaction) {
@@ -203,6 +226,11 @@ const ElementWrapper = ({ node, children }) => {
                     setTimeout(() => btn.style.transform = "scale(1)", 150);
                     // You might want to show a toast here if available, or just rely on the cart widget updating
                     console.log("Added to cart:", node.interaction.product);
+                } else if (node.interaction.type === 'scroll' && node.interaction.targetId) {
+                    const element = document.getElementById(node.interaction.targetId);
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
                 }
             }
             return;
@@ -220,13 +248,36 @@ const ElementWrapper = ({ node, children }) => {
     };
 
     const handleDragStart = (e) => {
+        if (activeTool === 'hand') {
+            e.preventDefault();
+            return;
+        }
         if (isPreviewMode || node.type === 'background' || node.type === 'page') {
             e.preventDefault();
             return;
         }
         e.stopPropagation();
+
+        // Start Global Drag State
+        useEditorStore.getState().setIsDragging(true, node.id);
+
         e.dataTransfer.setData('application/react-builder-id', node.id);
+
+        // Capture Mouse Offset for Smooth Dragging (No Snap to Top-Left)
+        const rect = e.currentTarget.getBoundingClientRect();
+        const offsetX = e.clientX - rect.left;
+        const offsetY = e.clientY - rect.top;
+        e.dataTransfer.setData('application/react-builder-offset-x', offsetX);
+        e.dataTransfer.setData('application/react-builder-offset-y', offsetY);
+
         e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleDragEnd = () => {
+        // Cleanup Global Drag State
+        useEditorStore.getState().setIsDragging(false);
+        setDropPosition(null);
+        setActiveDropZone(null);
     };
 
     // Only specific types can accept drops (and only in edit mode)
@@ -235,25 +286,15 @@ const ElementWrapper = ({ node, children }) => {
     const handleDragOver = (e) => {
         e.preventDefault();
 
+        // PANNING FIX: Return if panning
+        if (activeTool === 'hand') return;
+
         // Only stop propagation if THIS element can accept the drop.
-        // Otherwise, let it bubble up to a parent container (like Hero/Section).
         if (canAcceptDrop) {
             e.stopPropagation();
         }
 
         if (canAcceptDrop) {
-            const rect = e.currentTarget.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const percent = x / rect.width;
-
-            // Smart Zone Detection
-            if (percent > 0.4 && percent < 0.6) {
-                setActiveDropZone('center');
-            } else if (percent <= 0.4) {
-                setActiveDropZone('left');
-            } else {
-                setActiveDropZone('right');
-            }
             e.dataTransfer.dropEffect = 'copy';
             return;
         }
@@ -261,10 +302,20 @@ const ElementWrapper = ({ node, children }) => {
         if (e.dataTransfer.types.includes('application/react-builder-id')) {
             e.dataTransfer.dropEffect = 'move';
 
-            // Calculate visual indicator
+            // Calculate visual indicator ONLY for explicit stacking (e.g. near top/bottom edges)
             const rect = e.currentTarget.getBoundingClientRect();
-            const midY = rect.top + rect.height / 2;
-            setDropPosition(e.clientY < midY ? 'top' : 'bottom');
+            const y = e.clientY - rect.top;
+
+            // Only show Before/After if layoutMode is NOT explicitly 'free'
+            if (node.layoutMode !== 'free') {
+                if (y < 15) {
+                    setDropPosition('top');
+                } else if (y > rect.height - 15) {
+                    setDropPosition('bottom');
+                } else {
+                    setDropPosition(null); // Middle is Free Zone
+                }
+            }
         }
     };
 
@@ -276,29 +327,16 @@ const ElementWrapper = ({ node, children }) => {
     const handleDrop = (e) => {
         e.preventDefault();
         e.stopPropagation();
+
+        // Capture State BEFORE Clearing
+        const currentDropPosition = dropPosition;
         setDropPosition(null);
         setActiveDropZone(null);
 
-        if (isPreviewMode) return;
+        // Create specific cleanup function or use store directly
+        useEditorStore.getState().setIsDragging(false);
 
-        // Smart Drop Logic: Apply Alignment
-        if (canAcceptDrop && activeDropZone) {
-            // Apply Auto-Alignment to Container
-            updateStyles(node.id, {
-                display: 'flex',
-                flexDirection: 'column', // Default to column for stacks usually, but justify works on main axis. 
-                // Wait, usually we want items stacked vertically centered? Or horizontally?
-                // Request says: "justify-content: center". For column, that aligns vertically. For row, horizontally.
-                // Assuming standard web builder flow often implies vertical stacking (column) but horizontal alignment (alignItems). 
-                // BUT "Justify Content Center" usually centers along main axis.
-                // If distinct items are dropped, user might expect standard flex behavior.
-                // Let's stick to the user's specific request: "justify-content: center".
-                // And ensure dynamic padding.
-                justifyContent: activeDropZone === 'center' ? 'center' : (activeDropZone === 'right' ? 'flex-end' : 'flex-start'),
-                alignItems: activeDropZone === 'center' ? 'center' : 'flex-start', // Also center cross-axis for true centering?
-                padding: '20px' // Dynamic padding base
-            });
-        }
+        if (isPreviewMode) return;
 
         // Handle File Drop (Desktop)
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
@@ -313,69 +351,57 @@ const ElementWrapper = ({ node, children }) => {
             return;
         }
 
-        // Handle Reordering or Free Movement
         const draggedId = e.dataTransfer.getData('application/react-builder-id');
+        const offsetX = parseFloat(e.dataTransfer.getData('application/react-builder-offset-x') || 0);
+        const offsetY = parseFloat(e.dataTransfer.getData('application/react-builder-offset-y') || 0);
 
-        // If Parent is in Free Layout Mode
-        if (node.layoutMode === 'free') {
-            const rect = e.currentTarget.getBoundingClientRect();
-            const element = e.currentTarget;
-            // Apply Teleportation Fix (Scroll + Clamp)
-            const rawX = (e.clientX - rect.left) + element.scrollLeft;
-            const rawY = (e.clientY - rect.top) + element.scrollTop;
-            const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
+        // Calculation of Relative Coordinates (Free Flow)
+        const rect = e.currentTarget.getBoundingClientRect();
+        const element = e.currentTarget;
 
-            const relX = clamp(rawX, 0, element.scrollWidth);
-            const relY = clamp(rawY, 0, element.scrollHeight);
+        // We subtract the initial mouse offset so the element stays under the cursor at the same grab point
+        const rawX = (e.clientX - rect.left) - offsetX + element.scrollLeft;
+        const rawY = (e.clientY - rect.top) - offsetY + element.scrollTop;
 
-            // If moving existing element
-            if (draggedId) {
-                useEditorStore.getState().updateStyles(draggedId, {
-                    position: 'absolute',
-                    top: `${relY}px`,
-                    left: `${relX}px`,
-                    marginTop: '0',
-                    marginLeft: '0'
-                });
+        const x = Math.max(0, rawX);
+        const y = Math.max(0, rawY);
 
-                // If moving from another parent, we still need to "move" it in structure
-                if (draggedId !== node.id) {
-                    useEditorStore.getState().reparentElement(draggedId, node.id);
-                }
-                return;
-            }
+        // HYBRID LOGIC: Stack Reorder vs Free Flow
+        if (currentDropPosition && draggedId) {
+            // Stack Move (Reorder) - Snap to flow
+            useEditorStore.getState().updateStyles(draggedId, {
+                position: 'static',
+                top: 'auto',
+                left: 'auto',
+                transform: 'none'
+            });
 
-            // If Drop New Element in Free Mode
-            const type = e.dataTransfer.getData('application/react-builder-type');
-            if (type) {
-                addElement(node.id, type, {
-                    position: 'absolute',
-                    top: `${relY}px`,
-                    left: `${relX}px`,
-                    width: 'auto', // Let content dictate width initially
-                    height: 'auto'
-                });
-            }
-            return;
-        }
-
-        // Standard Stack/Flex Reordering (Only if NOT dropping into container as parent)
-        // If we are dropping ON a container, we usually append. 
-        // Logic: If canAcceptDrop is true, we treated it as "Smart Drop" above and applied styles.
-        // We still need to ADD the element!
-
-        const type = e.dataTransfer.getData('application/react-builder-type');
-
-        if (draggedId) {
-            // Move logic...
             if (draggedId !== node.id) {
-                // For smart drop, if specific zone, maybe we append?
-                // Simple logic: If strict reordering (dropPosition set), do that. 
-                // If smart zone set, append to THIS node.
                 useEditorStore.getState().reparentElement(draggedId, node.id);
             }
             return;
         }
+
+        // Free Flow (Default for Middle Drop)
+        if (draggedId) {
+            // Apply Absolute Position
+            useEditorStore.getState().updateStyles(draggedId, {
+                position: 'absolute',
+                top: `${y}px`,
+                left: `${x}px`,
+                marginTop: '0',
+                marginLeft: '0',
+                zIndex: node.layoutMode === 'free' ? undefined : 10
+            });
+
+            if (draggedId !== node.id) {
+                useEditorStore.getState().reparentElement(draggedId, node.id);
+            }
+            return;
+        }
+
+        // Handle New Element Drop
+        const type = e.dataTransfer.getData('application/react-builder-type');
 
         if (type === 'image' || type === 'video') {
             const acceptType = type === 'image' ? 'image/*' : 'video/*';
@@ -387,15 +413,14 @@ const ElementWrapper = ({ node, children }) => {
                 if (file) {
                     const reader = new FileReader();
                     reader.onload = (e) => {
+                        const content = e.target.result;
                         if (type === 'image') {
-                            useEditorStore.getState().addImageElement(node.id, e.target.result);
+                            useEditorStore.getState().addImageElement(node.id, content);
                         } else {
-                            // For video, we can store the DataURL (small videos) or just a Blob URL if local?
-                            // DataURL is safer for now if we want it to persist in memory store.
-                            // But for large videos, Blob URL is better but ephemeral.
-                            // Let's use DataURL for consistency with Image, warning about size?
-                            // User requirement implies local upload.
-                            useEditorStore.getState().addElement(node.id, 'video', { content: e.target.result });
+                            useEditorStore.getState().addElement(node.id, 'video', {
+                                content,
+                                styles: { position: 'absolute', top: `${y}px`, left: `${x}px`, zIndex: 10 }
+                            });
                         }
                     };
                     reader.readAsDataURL(file);
@@ -406,107 +431,122 @@ const ElementWrapper = ({ node, children }) => {
         }
 
         if (type) {
-            addElement(node.id, type);
+            // New Element -> Absolute Position
+            addElement(node.id, type, {
+                position: 'absolute',
+                top: `${y}px`,
+                left: `${x}px`,
+                width: 'auto',
+                height: 'auto',
+                zIndex: 10
+            });
         }
     };
 
-    // Check if parent (this node) has free layout to simplify Wrapper rendering for children? 
-    // Actually the Wrapper is FOR this node, so we check `node.styles.position` mostly.
+    // We need to inject handleMouseDown into the returned JSX
 
     // Force re-render key for test button
-    // User requested: key={component.id + component.animation + Date.now()}
-    // We use JSON.stringify(animation) to detect ANY change in animation config
     const renderKey = node.id + (animation ? JSON.stringify(animation) : '') + (isPreviewMode ? '-preview' : '-edit');
-
     const hasAOS = !!animation.type;
-
-    // CSS Variables for Ambient Control
-    const ambientVars = {};
-    if (backgroundConfig.ambientOpacity) ambientVars['--ambient-opacity'] = backgroundConfig.ambientOpacity;
-    if (backgroundConfig.ambientDuration) ambientVars['--ambient-duration'] = `${backgroundConfig.ambientDuration}s`;
 
     return (
         <motion.div
             key={renderKey}
-            layout={!hasAOS}
-            initial={hasAOS ? undefined : { opacity: 0, scale: 0.9 }}
-            animate={hasAOS ? undefined : { opacity: 1, scale: 1 }}
-            exit={hasAOS ? undefined : { opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.2 }}
-            {...motionProps}
+            layout={!hasAOS && node.layoutMode !== 'free'} // Disable layout animation for Free Mode to prevent fighting
+            // ...
             ref={nodeRef}
+            id={node.htmlId}
             data-node-id={node.id}
-
-
-            draggable={!isPreviewMode}
+            draggable={!isPreviewMode && activeTool !== 'hand'} // Disable dragging if hand tool
             onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
             onClick={handleClick}
+            onMouseDown={handleMouseDown} // Add Mouse Down for Panning
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             className={clsx(
                 "relative transition-all duration-200",
-                node.className, // CRITICAL: Apply texture classes stored here
-                ambientClass, // Apply Ambient Animation
-                spotlightClass, // Apply Interactive Spotlight
-                // "aos-animate" removed to allow scroll trigger
                 !isPreviewMode && "cursor-pointer",
                 isSelected ? "ring-2 ring-indigo-500 ring-offset-2 z-10" : (!isPreviewMode && "hover:ring-1 hover:ring-indigo-300 hover:z-10"),
                 canAcceptDrop && "hover:bg-slate-50/50", // Visual hint for drop zones
                 isPreviewMode && node.interaction?.type !== 'none' && "cursor-pointer hover:opacity-80",
                 node.layoutMode === 'free' && !isPreviewMode && "bg-[url('https://www.transparenttextures.com/patterns/graphy.png')] bg-opacity-20",
                 // Active Zone Highlights
-                activeDropZone === 'center' && "bg-indigo-50/30",
-                activeDropZone === 'left' && "bg-slate-50/30",
-                activeDropZone === 'right' && "bg-slate-50/30"
+                node.layoutMode !== 'free' && activeDropZone === 'center' && "bg-indigo-50/30",
+                node.layoutMode !== 'free' && activeDropZone === 'left' && "bg-slate-50/30",
+                node.layoutMode !== 'free' && activeDropZone === 'right' && "bg-slate-50/30",
+
+                // POINTER EVENTS FIX: Ignore children when dragging to allow free drop on canvas
+                // BUT keep pointer events on the dragged item itself so drag doesn't break
+                useEditorStore.getState().isDragging && useEditorStore.getState().draggedId !== node.id && "pointer-events-none",
+
+                // HAND TOOL STYLES
+                activeTool === 'hand' && "cursor-grab",
+                activeTool === 'hand' && isPanning && "cursor-grabbing",
+                activeTool === 'hand' && node.type !== 'page' && "pointer-events-none" // Disable interaction with items when using hand
             )}
             style={{
                 ...styles,
-                ...ambientVars,
                 boxShadow: dropPosition ? '0 0 0 2px #6366f1' : (isSelected ? undefined : 'none')
             }}
         >
-            {/* Smart Guide: Center Line */}
-            {activeDropZone === 'center' && (
-                <div className="absolute top-0 bottom-0 left-1/2 w-px border-l-2 border-dotted border-indigo-500 z-50 pointer-events-none transform -translate-x-1/2 flex items-center justify-center">
-                    <div className="bg-indigo-500 text-white text-[9px] px-1 rounded">Centrar</div>
-                </div>
+
+
+            {/* ... children ... */}
+            {/* Overlay for Iframe Interaction Blocking while Editing */}
+            {!isPreviewMode && (node.type === 'video' || node.type === 'iframe') && (
+                <div className="absolute inset-0 z-10 bg-transparent" />
             )}
 
+            {/* Smart Guide: Center Line */}
+            {
+                node.layoutMode !== 'free' && activeDropZone === 'center' && (
+                    <div className="absolute top-0 bottom-0 left-1/2 w-px border-l-2 border-dotted border-indigo-500 z-50 pointer-events-none transform -translate-x-1/2 flex items-center justify-center">
+                        <div className="bg-indigo-500 text-white text-[9px] px-1 rounded">Centrar</div>
+                    </div>
+                )
+            }
+
             {/* Visual Drop Indicator (Top/Bottom sibling drop) */}
-            {dropPosition === 'top' && !activeDropZone && (
-                <div className="absolute -top-3 left-0 w-full h-1.5 bg-indigo-500 rounded-full shadow-lg z-50 pointer-events-none animate-in fade-in duration-150">
-                    <div className="absolute left-1/2 -top-6 -translate-x-1/2 bg-indigo-500 text-white text-[10px] px-2 py-0.5 rounded font-bold shadow-sm whitespace-nowrap">Soltar antes</div>
-                </div>
-            )}
+            {
+                node.layoutMode !== 'free' && dropPosition === 'top' && !activeDropZone && (
+                    <div className="absolute -top-3 left-0 w-full h-1.5 bg-indigo-500 rounded-full shadow-lg z-50 pointer-events-none animate-in fade-in duration-150">
+                        <div className="absolute left-1/2 -top-6 -translate-x-1/2 bg-indigo-500 text-white text-[10px] px-2 py-0.5 rounded font-bold shadow-sm whitespace-nowrap">Soltar antes</div>
+                    </div>
+                )
+            }
 
             {children}
 
-            {dropPosition === 'bottom' && !activeDropZone && (
-                <div className="absolute -bottom-3 left-0 w-full h-1.5 bg-indigo-500 rounded-full shadow-lg z-50 pointer-events-none animate-in fade-in duration-150">
-                    <div className="absolute left-1/2 -bottom-6 -translate-x-1/2 bg-indigo-500 text-white text-[10px] px-2 py-0.5 rounded font-bold shadow-sm whitespace-nowrap">Soltar después</div>
-                </div>
-            )}
-
-            {!isPreviewMode && (
-                <Resizer targetRef={nodeRef} id={node.id} isSelected={isSelected} />
-            )}
-
-            {isSelected && (
-                <>
-                    <div className="absolute -top-6 left-0 bg-indigo-500 text-white text-xs px-2 py-1 rounded-t shadow-sm flex items-center gap-2 z-[100] whitespace-nowrap pointer-events-none">
-                        <span className="capitalize font-medium">{node.type}</span>
+            {
+                node.layoutMode !== 'free' && dropPosition === 'bottom' && !activeDropZone && (
+                    <div className="absolute -bottom-3 left-0 w-full h-1.5 bg-indigo-500 rounded-full shadow-lg z-50 pointer-events-none animate-in fade-in duration-150">
+                        <div className="absolute left-1/2 -bottom-6 -translate-x-1/2 bg-indigo-500 text-white text-[10px] px-2 py-0.5 rounded font-bold shadow-sm whitespace-nowrap">Soltar después</div>
                     </div>
-                    {/* Z-Index Toolbar */}
-                    <QuickLayerToolbar selectedId={node.id} />
-                </>
-            )}
-        </motion.div>
+                )
+            }
+
+            {
+                !isPreviewMode && (
+                    <Resizer targetRef={nodeRef} id={node.id} isSelected={isSelected} />
+                )
+            }
+
+            {
+                isSelected && (
+                    <>
+                        <div className="absolute -top-6 left-0 bg-indigo-500 text-white text-xs px-2 py-1 rounded-t shadow-sm flex items-center gap-2 z-[100] whitespace-nowrap pointer-events-none">
+                            <span className="capitalize font-medium">{node.type}</span>
+                        </div>
+                        {/* Z-Index Toolbar */}
+                        <QuickLayerToolbar selectedId={node.id} />
+                    </>
+                )
+            }
+        </motion.div >
     );
-
 };
-
-
 
 const RendererInner = ({ node }) => {
     if (!node) return null;
@@ -554,8 +594,12 @@ const RendererInner = ({ node }) => {
             // 1. Coordinates Calculation
             const rect = e.currentTarget.getBoundingClientRect();
             const element = e.currentTarget;
-            const x = (e.clientX - rect.left) + element.scrollLeft;
-            const y = (e.clientY - rect.top) + element.scrollTop;
+
+            const offsetX = parseFloat(e.dataTransfer.getData('application/react-builder-offset-x') || 0);
+            const offsetY = parseFloat(e.dataTransfer.getData('application/react-builder-offset-y') || 0);
+
+            const x = (e.clientX - rect.left) - offsetX + element.scrollLeft;
+            const y = (e.clientY - rect.top) - offsetY + element.scrollTop;
 
             // 2. Handle Existing Element Move
             const draggedId = e.dataTransfer.getData('application/react-builder-id');
@@ -641,7 +685,7 @@ const RendererInner = ({ node }) => {
             <ElementWrapper node={node}>
                 <div
                     style={{ ...node.styles, position: 'relative' }} // 1. CSS Change: Container Relative
-                    className="min-h-screen w-full bg-white shadow-sm"
+                    className="min-h-screen w-full bg-white shadow-sm pointer-events-auto" // Force pointer events on root container
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
                 >
@@ -954,6 +998,32 @@ const RendererInner = ({ node }) => {
                     stretch={galleryData.stretch}
                     depth={galleryData.depth}
                     shadow={galleryData.shadow}
+                />
+            </ElementWrapper>
+        );
+
+    }
+
+    if (node.type === 'countdown') {
+        const countdownData = node.data || {};
+        return (
+            <ElementWrapper node={node}>
+                <CountdownBlock
+                    targetDate={countdownData.targetDate || node.targetDate}
+                    styles={node.styles}
+                />
+            </ElementWrapper>
+        );
+    }
+
+    if (node.type === 'flashOffer') {
+        const flashData = node.data || {};
+        return (
+            <ElementWrapper node={node}>
+                <FlashOfferBlock
+                    endDate={flashData.endDate}
+                    message={flashData.message}
+                    styles={node.styles}
                 />
             </ElementWrapper>
         );

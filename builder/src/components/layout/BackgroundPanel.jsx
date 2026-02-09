@@ -2,6 +2,8 @@ import React from 'react';
 import { Palette, Image as ImageIcon, Layout, Type, Sparkles } from 'lucide-react';
 import clsx from 'clsx';
 import { InfoLabel } from '../ui/InfoLabel';
+import { useEditorStore } from '../../store/useEditorStore';
+import { Monitor, Tablet, Smartphone } from 'lucide-react'; // Added icons
 
 // Reusing SliderControl if exported, or defining local simple one
 const SliderControl = ({ label, value, onChange, min = 0, max = 100, step = 1, unit = '' }) => {
@@ -65,6 +67,7 @@ export const BackgroundPanel = ({ selectedNode, updateStyles, updateProperty, se
         }
     };
 
+
     const updateGradient = (key, val) => {
         const newConfig = { ...bgConfig, [key]: val };
         updateProperty(selectedId, 'backgroundConfig', newConfig);
@@ -90,17 +93,11 @@ export const BackgroundPanel = ({ selectedNode, updateStyles, updateProperty, se
         }
     };
 
-    // --- Ambient Animation Handlers ---
-    const handleAmbientChange = (ambientType) => {
-        updateProperty(selectedId, 'backgroundConfig', { ...bgConfig, ambientType });
-    };
 
-    const toggleSpotlight = (enabled) => {
-        updateProperty(selectedId, 'backgroundConfig', { ...bgConfig, spotlightEnabled: enabled });
-    };
 
     return (
         <div className="space-y-4">
+
             <div className="flex items-center justify-between mb-2 border-b border-border pb-2">
                 <div className="flex items-center gap-2">
                     <Palette size={14} className="text-secondary" />
@@ -114,12 +111,7 @@ export const BackgroundPanel = ({ selectedNode, updateStyles, updateProperty, se
                     >
                         Color
                     </button>
-                    <button
-                        onClick={() => setActiveTab('ambient')}
-                        className={clsx("px-2 py-0.5 text-[10px] rounded transition-all flex items-center gap-1", activeTab === 'ambient' ? "bg-white shadow text-primary font-medium" : "text-text-muted hover:text-text")}
-                    >
-                        <Sparkles size={10} /> Amb.
-                    </button>
+
                 </div>
             </div>
 
@@ -147,7 +139,8 @@ export const BackgroundPanel = ({ selectedNode, updateStyles, updateProperty, se
                         </button>
                     </div>
 
-                    {/* Controls */}
+
+
                     {bgConfig.type === 'solid' && (
                         <div className="animate-in fade-in slide-in-from-top-1">
                             <label className="text-[10px] text-text-muted font-bold block mb-1">Color de Fondo</label>
@@ -220,73 +213,7 @@ export const BackgroundPanel = ({ selectedNode, updateStyles, updateProperty, se
                 </div>
             )}
 
-            {activeTab === 'ambient' && (
-                <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-4">
-                    {/* Visual Ambient Selector */}
-                    <div className="grid grid-cols-2 gap-2">
-                        <button
-                            onClick={() => handleAmbientChange('none')}
-                            className={clsx("h-16 rounded border transition-all flex items-center justify-center bg-gray-50", (!bgConfig.ambientType || bgConfig.ambientType === 'none') ? "border-primary ring-1 ring-primary" : "border-border hover:border-primary/50")}
-                        >
-                            <span className="text-[10px] text-gray-500">Ninguna</span>
-                        </button>
 
-                        <button
-                            onClick={() => handleAmbientChange('pulse')}
-                            className={clsx("h-16 rounded border transition-all relative overflow-hidden bg-slate-900 group", bgConfig.ambientType === 'pulse' ? "border-primary ring-1 ring-primary" : "border-border hover:border-primary/50")}
-                        >
-                            <div className="absolute inset-0 opacity-60 animate-radial-pulse" style={{ '--ambient-duration': '3s' }}></div>
-                            <span className="relative z-10 text-[10px] text-white font-bold bg-black/50 px-2 py-0.5 rounded backdrop-blur-[1px]">Radial (Aurora)</span>
-                        </button>
-                    </div>
-
-                    {/* Ambient Controls */}
-                    {bgConfig.ambientType && bgConfig.ambientType !== 'none' && (
-                        <div className="p-3 bg-surface-highlight/30 rounded-lg border border-border/50 space-y-2">
-                            <span className="text-[10px] text-text font-bold mb-2 block">Ajustes de Ambiente</span>
-
-                            <SliderControl
-                                label="Notoriedad (Opacidad)"
-                                value={bgConfig.ambientOpacity || 1}
-                                onChange={(val) => updateProperty(selectedId, 'backgroundConfig', { ...bgConfig, ambientOpacity: val })}
-                                min={0.1}
-                                max={1}
-                                step={0.1}
-                            />
-                            <SliderControl
-                                label="Velocidad (s)"
-                                value={bgConfig.ambientDuration || 15}
-                                onChange={(val) => updateProperty(selectedId, 'backgroundConfig', { ...bgConfig, ambientDuration: val })}
-                                min={0.1}
-                                max={60}
-                                step={0.1}
-                                unit="s"
-                            />
-                        </div>
-                    )}
-
-                    {/* Spotlight Toggle */}
-                    <div className="p-3 bg-gradient-to-r from-surface-highlight to-surface rounded-lg border border-border/50">
-                        <div className="flex items-center justify-between">
-                            <div className="flex flex-col">
-                                <span className="text-[11px] font-bold text-text flex items-center gap-1">
-                                    <Sparkles size={12} className="text-primary" /> Luz Interactiva
-                                </span>
-                                <span className="text-[9px] text-text-muted">El fondo sigue al mouse.</span>
-                            </div>
-                            <label className="relative inline-flex items-center cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={bgConfig.spotlightEnabled || false}
-                                    onChange={(e) => toggleSpotlight(e.target.checked)}
-                                    className="sr-only peer"
-                                />
-                                <div className="w-9 h-5 bg-border rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

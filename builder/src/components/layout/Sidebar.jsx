@@ -8,10 +8,7 @@ import {
 import * as LucideIcons from 'lucide-react';
 import { DraggableItem } from '../ui/DraggableItem';
 import { useEditorStore } from '../../store/useEditorStore';
-import { ProjectSettingsModal } from './ProjectSettingsModal';
-import { CommunityTemplatesModal } from './CommunityTemplatesModal';
 import clsx from 'clsx';
-import { AdvancedIconPickerModal } from './AdvancedIconPickerModal';
 
 // ... (existing code)
 
@@ -35,16 +32,13 @@ const SidebarCategory = ({ title, children, defaultOpen = false }) => {
     );
 };
 
-export const Sidebar = () => {
+export const Sidebar = ({ onShowSettings, onShowTemplates, onShowIconPicker }) => {
     // Standard State
     const { toggleTutorial, pages, activePageId, setActivePage, addPage, deletePage, renamePage, addElement } = useEditorStore();
     const [isAdding, setIsAdding] = useState(false);
     const [newPageName, setNewPageName] = useState('');
     const [editingId, setEditingId] = useState(null);
     const [editName, setEditName] = useState('');
-    const [showSettings, setShowSettings] = useState(false);
-    const [showIconPicker, setShowIconPicker] = useState(false);
-    const [showTemplates, setShowTemplates] = useState(false);
 
     // AI Gen State removed
 
@@ -67,9 +61,7 @@ export const Sidebar = () => {
         <>
             <div className="flex flex-col h-full bg-surface" id="sidebar-panel">
                 <div className="p-5 border-b border-border flex justify-between items-center">
-                    <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-violet-400 bg-clip-text text-transparent">
-                        E-ToolMerce
-                    </h1>
+                    <img src="/logo.png" alt="E-ToolMerce" className="w-full h-auto object-contain" />
                 </div>
 
                 <div className="flex-1 overflow-y-auto no-scrollbar">
@@ -187,7 +179,7 @@ export const Sidebar = () => {
                                 label="Icono"
                                 description="Haz clic para elegir icono"
                                 variant="blue"
-                                onClick={() => setShowIconPicker(true)}
+                                onClick={onShowIconPicker}
                             />
                         </SidebarCategory>
 
@@ -220,14 +212,14 @@ export const Sidebar = () => {
 
                 <div className="p-4 border-t border-border space-y-2 bg-background z-10">
                     <button
-                        onClick={() => setShowTemplates(true)}
+                        onClick={onShowTemplates}
                         className="w-full py-2 px-4 bg-gradient-to-r from-violet-500/10 to-indigo-500/10 hover:from-violet-500/20 hover:to-indigo-500/20 border border-violet-500/20 rounded-lg text-sm font-bold text-indigo-600 hover:text-indigo-700 transition-all flex items-center justify-center gap-2 group"
                     >
                         <LayoutTemplate size={16} className="group-hover:scale-110 transition-transform" />
                         Plantillas Comunidad
                     </button>
                     <button
-                        onClick={() => setShowSettings(true)}
+                        onClick={onShowSettings}
                         className="w-full py-2 px-4 bg-surface hover:bg-surface-highlight border border-border rounded-lg text-sm font-medium text-text-muted hover:text-primary transition-colors flex items-center justify-center gap-2"
                     >
                         <Settings size={16} />
@@ -242,27 +234,6 @@ export const Sidebar = () => {
                     </button>
                 </div>
             </div >
-
-            {showSettings && <ProjectSettingsModal onClose={() => setShowSettings(false)} />}
-            {showTemplates && <CommunityTemplatesModal onClose={() => setShowTemplates(false)} />}
-
-            {/* Advanced Icon Picker */}
-            {showIconPicker && (
-                <AdvancedIconPickerModal
-                    onClose={() => setShowIconPicker(false)}
-                    onSelect={(iconData) => {
-                        const state = useEditorStore.getState();
-                        const targetId = state.selectedId || state.pages.find(p => p.id === state.activePageId)?.content?.id;
-
-                        if (targetId) {
-                            addElement(targetId, 'icon', {
-                                content: iconData.content,
-                                ...iconData.styles
-                            });
-                        }
-                    }}
-                />
-            )}
         </>
     );
 };

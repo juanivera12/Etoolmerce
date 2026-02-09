@@ -108,10 +108,9 @@ export const PublishTemplateModal = ({ onClose }) => {
 
             if (uploadError) throw uploadError;
 
-            // Get Public URL
-            const { data: { publicUrl } } = supabase.storage
-                .from('template-previews')
-                .getPublicUrl(fileName);
+            // Fetch fresh user data just before inserting to be safe
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            if (!currentUser) throw new Error("Sesión expirada. Por favor, inicia sesión de nuevo.");
 
             // 2. Insert Record into Database
             const { error: insertError } = await supabase
@@ -122,9 +121,9 @@ export const PublishTemplateModal = ({ onClose }) => {
                         description,
                         thumbnail_url: publicUrl,
                         structure_json: components, // The actual editor content
-                        author_id: user.id,
-                        author_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Unknown User',
-                        author_pfp: user.user_metadata?.avatar_url || user.identities?.[0]?.identity_data?.avatar_url || null // Add Profile Picture
+                        author_id: currentUser.id,
+                        author_name: currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email || 'Autor Desconocido',
+                        author_avatar: currentUser.user_metadata?.avatar_url || currentUser.user_metadata?.picture || null
                     }
                 ]);
 

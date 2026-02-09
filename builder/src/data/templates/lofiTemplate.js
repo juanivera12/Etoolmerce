@@ -51,7 +51,7 @@ export const LoFiTemplate = {
                     {
                         id: "role_subtitle",
                         type: "text",
-                        content: "TECNICO EN PROGRAMACION | DESARROLLADOR IA",
+                        content: "TECNICO EN PROGRAMACION | DESARROLLADOR FULL STACK",
                         styles: {
                             fontSize: "1.2rem",
                             fontFamily: "monospace",
@@ -155,12 +155,12 @@ export const LoFiTemplate = {
                                         id: "exp_item_2",
                                         type: "container",
                                         children: [
-                                            { id: "exp_2_role", type: "text", content: "DESARROLLADOR IA / FREELANCE", styles: { fontSize: "1.2rem", fontWeight: "bold", fontFamily: "monospace" } },
+                                            { id: "exp_2_role", type: "text", content: "DESARROLLADOR BACKEND / FREELANCE", styles: { fontSize: "1.2rem", fontWeight: "bold", fontFamily: "monospace" } },
                                             { id: "exp_2_date", type: "text", content: "AGOSTO 2025 - DICIEMBRE 2025", styles: { fontSize: "0.9rem", color: "#666", marginBottom: "10px", fontFamily: "monospace" } },
                                             {
                                                 id: "exp_2_desc",
                                                 type: "text",
-                                                content: "• Desarrollo de chatbot de atención al cliente con integración de OpenAI.\n• Backend en Python y PostgreSQL.\n• Integración de WhatsApp Business API.",
+                                                content: "• Desarrollo de sistemas de atención al cliente automatizados.\n• Backend en Python y PostgreSQL.\n• Integración de WhatsApp Business API.",
                                                 styles: { fontFamily: "monospace", lineHeight: "1.6", whiteSpace: "pre-line" }
                                             }
                                         ]
@@ -188,7 +188,7 @@ export const LoFiTemplate = {
                                     {
                                         id: "skills_list",
                                         type: "text",
-                                        content: "• Python, React, JavaScript\n• HTML, CSS, Flask\n• SQL, SQLite, PostgreSQL\n• Java, SpringBoot\n• Git / GitHub\n• TypeScript, API REST\n• OpenAI, Figma\n• Scrum, Trello, Clickup",
+                                        content: "• Python, React, JavaScript\n• HTML, CSS, Flask\n• SQL, SQLite, PostgreSQL\n• Java, SpringBoot\n• Git / GitHub\n• TypeScript, API REST\n• Figma, UI/UX\n• Scrum, Trello, Clickup",
                                         styles: { fontFamily: "monospace", lineHeight: "1.8", whiteSpace: "pre-line" }
                                     }
                                 ]
@@ -200,7 +200,7 @@ export const LoFiTemplate = {
                                 styles: { marginBottom: "40px" },
                                 children: [
                                     { id: "cert_title", type: "text", content: "CERTIFICACIÓN", styles: { fontSize: "1.5rem", fontFamily: "monospace", borderBottom: "2px solid #000", paddingBottom: "10px", marginBottom: "20px", fontWeight: "bold" } },
-                                    { id: "cert_list", type: "text", content: "• Google AI Essentials\n• Tecnico en programacion", styles: { fontFamily: "monospace", lineHeight: "1.6", whiteSpace: "pre-line" } }
+                                    { id: "cert_list", type: "text", content: "• Cloud Computing Fundamentals\n• Tecnico en programacion", styles: { fontFamily: "monospace", lineHeight: "1.6", whiteSpace: "pre-line" } }
                                 ]
                             },
                             // SOCIALS

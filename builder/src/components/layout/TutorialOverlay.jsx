@@ -10,34 +10,54 @@ export const TutorialOverlay = () => {
 
     const steps = [
         {
-            title: "¡Bienvenido al Constructor!",
-            content: "Aquí puedes crear tu tienda online profesional en minutos. Vamos a dar un paseo rápido.",
-            target: null // Center
+            title: "Bienvenido al Constructor",
+            content: "Aquí tienes todas las herramientas para construir tu sitio. Este tutorial explica detalladamente cada sección del editor.",
+            target: null
         },
         {
-            title: "1. Tus Herramientas",
-            content: "En la barra lateral izquierda tienes todo lo que necesitas: Texto, Imágenes, Videos, y ahora nuevos componentes como 'Héroe' y 'Tarjetas'. ¡Solo arrástralos!",
-            target: "sidebar" // ID we need to add to sidebar
+            title: "1. Panel Izquierdo: Categorías",
+            content: "A la izquierda encontrarás tus bloques organizados en 4 categorías: Navegación, Básicos, Tienda y Marketing. Haz clic en cada categoría para desplegarla.",
+            target: "sidebar-panel"
         },
         {
-            title: "2. El Lienzo (Canvas)",
-            content: "Este es tu espacio de trabajo. Arrastra los elementos aquí. Puedes moverlos libremente si activas el modo 'Libre' en las propiedades.",
-            target: "canvas"
+            title: "2. Componentes Básicos y Navegación",
+            content: "Usa 'Header' y 'Footer' para la estructura. Agrega contenido con 'Texto', 'Imagen', 'Video' y 'Botones'. Son los bloques fundamentales de tu página.",
+            target: "sidebar-panel"
         },
         {
-            title: "3. Edición Visual",
-            content: "Haz clic en cualquier elemento para editarlo. Verás puntos en las esquinas para cambiar el tamaño (¡nuevo!) y un panel a la derecha para colores y estilos.",
-            target: "properties"
+            title: "3. Herramientas de Tienda",
+            content: "Construye tu e-commerce con 'Grid Productos' (catálogo), 'Carrito' (widget de compras) y 'Checkout' (botón de pago). Todo integrado para vender.",
+            target: "sidebar-panel"
         },
         {
-            title: "4. Inteligencia Artificial",
-            content: "Usa la barra inferior para pedirle cosas a la IA: 'Añade un héroe oscuro', 'Centra esto', 'Haz el texto gigante'.",
-            target: "ai-bar"
+            title: "4. Marketing y Promoción",
+            content: "Destaca contenido con 'Carrusel', 'Galería 3D', 'Oferta Flash' y 'Testimonios'. Ideales para captar la atención de tus clientes.",
+            target: "sidebar-panel"
         },
         {
-            title: "5. Eliminar Elementos",
-            content: "¿No te gusta algo? Arrástralo al icono de la papelera roja en la esquina inferior derecha para eliminarlo al instante.",
-            target: "trash-zone"
+            title: "5. El Lienzo (Canvas)",
+            content: "Arrastra cualquier componente desde la izquierda y suéltalo aquí. Haz clic sobre cualquier elemento en el lienzo para seleccionarlo y editarlo.",
+            target: null
+        },
+        {
+            title: "6. Panel Derecho: Propiedades",
+            content: "Aquí personalizas el elemento seleccionado. 'Estilos' para colores y tamaños. 'Efectos' para sombras y bordes. 'Props' para configuraciones específicas.",
+            target: null
+        },
+        {
+            title: "7. Configuración de Anclajes (IDs)",
+            content: "Para crear secciones navegables, ve a la pestaña 'Props' o 'Avanzado' y asigna un 'ID de Bloque' único (ej: 'contacto') al componente que desees.",
+            target: null
+        },
+        {
+            title: "8. Creación de Enlaces Internos",
+            content: "Para que un botón lleve a esa sección, selecciona el botón, ve a 'Interacción', elige 'Scroll a Sección' y selecciona el ID que acabas de crear.",
+            target: null
+        },
+        {
+            title: "9. Gestión de Elementos",
+            content: "Si necesitas borrar algo, simplemente arrástralo al icono de la papelera en la esquina inferior derecha.",
+            target: null
         }
     ];
 

@@ -259,6 +259,39 @@ export const PropertiesPanel = () => {
                             </div>
                         )}
 
+                        {/* Layout Mode (Stack vs Free) */}
+                        {(selectedNode.type === 'section' || selectedNode.type === 'container' || selectedNode.type === 'header' || selectedNode.type === 'footer' || selectedNode.type === 'hero' || selectedNode.type === 'page') && (
+                            <div className="space-y-3 pb-4 border-b border-border">
+                                <label className="text-xs font-semibold text-text flex items-center gap-2">
+                                    <Layout size={14} /> Sistema de Diseño
+                                </label>
+                                <div className="flex gap-2 bg-surface-highlight p-1 rounded-lg border border-border">
+                                    <button
+                                        onClick={() => updateProperty(selectedId, 'layoutMode', 'stack')}
+                                        className={clsx(
+                                            "flex-1 py-1.5 text-[10px] font-medium rounded transition-all flex items-center justify-center gap-1",
+                                            (!selectedNode.layoutMode || selectedNode.layoutMode === 'stack') ? "bg-white text-primary shadow-sm" : "text-text-muted hover:text-text"
+                                        )}
+                                    >
+                                        <AlignLeft size={12} /> Bloques (Stack)
+                                    </button>
+                                    <button
+                                        onClick={() => updateProperty(selectedId, 'layoutMode', 'free')}
+                                        className={clsx(
+                                            "flex-1 py-1.5 text-[10px] font-medium rounded transition-all flex items-center justify-center gap-1",
+                                            selectedNode.layoutMode === 'free' ? "bg-white text-primary shadow-sm" : "text-text-muted hover:text-text"
+                                        )}
+                                    >
+                                        <Layout size={12} /> Libre (Canvas)
+                                    </button>
+                                </div>
+                                <p className="text-[10px] text-text-muted leading-tight">
+                                    <strong>Bloques:</strong> Orden automático (columnas/filas). <br />
+                                    <strong>Libre:</strong> Arrastra y suelta en cualquier coordenada (X, Y). ideal para diseños superpuestos.
+                                </p>
+                            </div>
+                        )}
+
                         {/* Dimensions & Layout */}
                         <div className="space-y-3 pb-4 border-b border-border">
                             <label className="text-xs font-semibold text-text flex items-center gap-2">
@@ -624,7 +657,40 @@ export const PropertiesPanel = () => {
                                 <option value="none">Nada</option>
                                 <option value="link">Ir a Página</option>
                                 <option value="url">Abrir URL</option>
+                                <option value="scroll">Scroll a Sección</option>
                             </select>
+
+                            {/* Interaction: Scroll to ID */}
+                            {selectedNode.interaction?.type === 'scroll' && (
+                                <div className="space-y-2">
+                                    <div className="flex flex-col gap-1">
+                                        <InfoLabel label="ID del Objetivo" tooltip="El ID de la sección a la que quieres deslizar." />
+                                        <input
+                                            type="text"
+                                            list="available-ids"
+                                            placeholder="ej: sobre-mi"
+                                            value={selectedNode.interaction?.targetId || ''}
+                                            onChange={(e) => updateProperty(selectedId, 'interaction', { ...selectedNode.interaction, targetId: e.target.value })}
+                                            className="w-full p-2 text-sm border border-border rounded-lg bg-surface-highlight text-text"
+                                        />
+                                        <datalist id="available-ids">
+                                            {/* Helper to extract all IDs from the page */}
+                                            {(() => {
+                                                const ids = [];
+                                                const traverse = (node) => {
+                                                    if (node.htmlId) ids.push(node.htmlId);
+                                                    if (node.children) node.children.forEach(traverse);
+                                                };
+                                                traverse(pageData);
+                                                return ids.map(id => <option key={id} value={id} />);
+                                            })()}
+                                        </datalist>
+                                        <p className="text-[10px] text-text-muted">
+                                            Escribe el ID o selecciona uno existente de la lista.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
 
                             {selectedNode.interaction?.type === 'link' && (
                                 <select
@@ -655,12 +721,19 @@ export const PropertiesPanel = () => {
                             <label className="text-xs font-semibold text-text">Atributos (Developers)</label>
                             <div className="grid grid-cols-2 gap-2">
                                 <div>
-                                    <InfoLabel label="ID" tooltip="Identificador único para enlaces internos (#) o Javascript. No usar espacios." />
+                                    <InfoLabel label="ID de Bloque (Anclaje)" tooltip="Usa este nombre para enlazar botones hacia esta sección. Se convertirá automáticamente a formato válido (ej: sobre-mi)." />
                                     <input
                                         type="text"
                                         value={selectedNode.htmlId || ''}
-                                        placeholder={selectedNode.id}
-                                        onChange={(e) => updateProperty(selectedId, 'htmlId', e.target.value)}
+                                        placeholder="ej: sobre-mi"
+                                        onChange={(e) => {
+                                            // Sanitize to kebab-case: lowercase, replace spaces with dashes, remove special chars
+                                            const sanitized = e.target.value
+                                                .toLowerCase()
+                                                .replace(/\s+/g, '-')
+                                                .replace(/[^a-z0-9-]/g, '');
+                                            updateProperty(selectedId, 'htmlId', sanitized);
+                                        }}
                                         className="w-full p-1.5 text-xs border border-border rounded bg-surface-highlight text-text font-mono"
                                     />
                                 </div>

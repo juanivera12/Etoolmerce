@@ -250,7 +250,7 @@ const neoFinanzasContent = {
                                 WebkitTextFillColor: "transparent"
                             }
                         },
-                        { id: "neo-p", type: "text", content: "Controla tus gastos, inversiones y ahorros desde una sola plataforma impulsada por IA.", styles: { color: "#94a3b8", fontSize: "18px", lineHeight: "1.6" } },
+                        { id: "neo-p", type: "text", content: "Controla tus gastos, inversiones y ahorros desde una sola plataforma impulsada por algoritmos inteligentes.", styles: { color: "#94a3b8", fontSize: "18px", lineHeight: "1.6" } },
                         {
                             id: "neo-hero-btn",
                             type: "button",

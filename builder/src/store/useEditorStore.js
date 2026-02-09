@@ -857,16 +857,39 @@ const createNode = (type, customStyles = {}) => {
                 id, type,
                 targetDate: new Date(Date.now() + 86400000).toISOString(),
                 styles: {
-                    display: 'flex', gap: '15px', justifyContent: 'center', alignItems: 'center', padding: '20px',
-                    backgroundColor: '#fff7ed', border: '1px solid #ffedd5', borderRadius: '12px'
+                    display: 'flex',
+                    gap: '15px',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    padding: '20px',
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '12px',
+                    color: '#000000',
+                    width: '350px',
+                    height: '100px',
+                    ...baseStyles,
+                    ...customStyles
+                }
+            };
+        case 'flashOffer':
+            return {
+                id, type,
+                styles: {
+                    width: '100%',
+                    backgroundColor: '#0f172a',
+                    color: 'white',
+                    padding: '0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    ...baseStyles,
+                    ...customStyles
                 },
-                children: [
-                    { id: `${id}-h`, type: 'text', content: '23', styles: { fontSize: '32px', fontWeight: 'bold', color: '#ea580c', lineHeight: 1 } },
-                    { id: `${id}-sep1`, type: 'text', content: ':', styles: { fontSize: '24px', fontWeight: 'bold', color: '#fed7aa', marginBottom: '4px' } },
-                    { id: `${id}-m`, type: 'text', content: '59', styles: { fontSize: '32px', fontWeight: 'bold', color: '#ea580c', lineHeight: 1 } },
-                    { id: `${id}-sep2`, type: 'text', content: ':', styles: { fontSize: '24px', fontWeight: 'bold', color: '#fed7aa', marginBottom: '4px' } },
-                    { id: `${id}-s`, type: 'text', content: '00', styles: { fontSize: '32px', fontWeight: 'bold', color: '#ea580c', lineHeight: 1 } }
-                ]
+                data: {
+                    endDate: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
+                    message: "¡Oferta Flash! Termina en:"
+                }
             };
         case 'promoBanner':
             return {
@@ -1448,6 +1471,54 @@ const createNode = (type, customStyles = {}) => {
                     }
                 ]
             };
+        case 'typewriter':
+            return {
+                id, type,
+                styles: {
+                    padding: '20px',
+                    width: 'auto',
+                    minWidth: '200px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    ...baseStyles,
+                    ...customStyles
+                },
+                data: {
+                    words: ["Diseño", "Innovación", "Futuro"],
+                    typingSpeed: 150,
+                    deletingSpeed: 50,
+                    loop: true
+                }
+            };
+        case 'threeDGallery':
+            return {
+                id, type,
+                styles: {
+                    width: '100%',
+                    height: '500px',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'transparent',
+                    ...baseStyles,
+                    ...customStyles
+                },
+                data: {
+                    images: [
+                        'https://swiperjs.com/demos/images/nature-1.jpg',
+                        'https://swiperjs.com/demos/images/nature-2.jpg',
+                        'https://swiperjs.com/demos/images/nature-3.jpg',
+                        'https://swiperjs.com/demos/images/nature-4.jpg'
+                    ],
+                    rotate: 50,
+                    stretch: 0,
+                    depth: 100,
+                    shadow: true
+                }
+            };
         default:
             return {
                 id,
@@ -1485,6 +1556,11 @@ export const useEditorStore = create((set, get) => ({
     isPreviewMode: false,
     viewMode: 'desktop',
     isTutorialActive: false,
+
+    // Global Drag State (Free Flow Fix)
+    isDragging: false,
+    draggedId: null,
+    setIsDragging: (isDragging, id = null) => set({ isDragging, draggedId: id }),
 
     setTool: (tool) => set({ activeTool: tool }),
     setViewMode: (mode) => set({ viewMode: mode }),
@@ -1626,7 +1702,7 @@ export const useEditorStore = create((set, get) => ({
                     backgroundColor: '#f8fafc', // Light gray background so it's visible on black
                     border: '1px dashed #cbd5e1'
                 };
-            } else if (isAbsolute && type === 'text') {
+            } else if (isAbsolute && (type === 'text' || type === 'typewriter')) {
                 customStyles = { ...customStyles, width: 'auto', minWidth: '100px' };
             }
 

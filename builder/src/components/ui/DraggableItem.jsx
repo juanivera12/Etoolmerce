@@ -1,16 +1,24 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useEditorStore } from '../../store/useEditorStore';
 import clsx from 'clsx';
 
 export const DraggableItem = ({ type, icon, label, description, preview, variant = 'blue', onClick }) => {
     const [showTooltip, setShowTooltip] = useState(false);
     const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
 
+    const { setIsDragging } = useEditorStore();
+
     const handleDragStart = (e) => {
         if (onClick) return;
+        setIsDragging(true, 'new-item'); // Enable Global Drag State
         e.dataTransfer.setData('application/react-builder-type', type);
         e.dataTransfer.effectAllowed = 'copy';
         setShowTooltip(false); // Hide tooltip on drag start
+    };
+
+    const handleDragEnd = () => {
+        setIsDragging(false); // Disable Global Drag State
     };
 
     const handleMouseEnter = (e) => {
@@ -43,6 +51,7 @@ export const DraggableItem = ({ type, icon, label, description, preview, variant
             <div
                 draggable
                 onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd} // Disable dragging state when drop is incomplete or cancelled
                 onClick={onClick}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}

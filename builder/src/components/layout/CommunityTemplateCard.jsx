@@ -61,9 +61,17 @@ export const CommunityTemplateCard = ({ template, onUse }) => {
                 <div className="mt-auto pt-3 flex items-center justify-between border-t border-border/50">
                     {template.author_name && (
                         <div className="flex items-center gap-1.5 text-text-muted">
-                            <div className="w-5 h-5 rounded-full bg-surface-highlight flex items-center justify-center text-[10px] font-bold uppercase text-text border border-border">
-                                {template.author_name.charAt(0)}
-                            </div>
+                            {template.author_avatar ? (
+                                <img
+                                    src={template.author_avatar}
+                                    alt={template.author_name}
+                                    className="w-5 h-5 rounded-full object-cover border border-border"
+                                />
+                            ) : (
+                                <div className="w-5 h-5 rounded-full bg-surface-highlight flex items-center justify-center text-[10px] font-bold uppercase text-text border border-border">
+                                    {template.author_name.charAt(0)}
+                                </div>
+                            )}
                             <span className="text-xs font-medium truncate max-w-[100px]">
                                 Por: {template.author_name}
                             </span>

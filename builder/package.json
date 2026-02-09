@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.5.0",
     "@supabase/supabase-js": "^2.93.3",
     "@tensorflow/tfjs": "^4.22.0",
     "aos": "^2.3.4",
@@ -18,6 +20,7 @@
     "framer-motion": "^12.23.26",
     "html2canvas": "^1.4.1",
     "jszip": "^3.10.1",
+    "lamina": "^1.2.2",
     "lucide-react": "^0.562.0",
     "nsfwjs": "^4.2.1",
     "react": "^19.2.0",
@@ -25,6 +28,7 @@
     "react-router-dom": "^7.13.0",
     "swiper": "^12.1.0",
     "tailwind-merge": "^3.4.0",
+    "three": "^0.182.0",
     "zustand": "^5.0.9"
   },
   "devDependencies": {

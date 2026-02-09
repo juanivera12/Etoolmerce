@@ -27,14 +27,22 @@ export const ThreeDGalleryBlock = ({
     ];
 
     return (
-        <div className="w-full py-10 relative">
+        <div className="w-full h-full relative flex items-center justify-center overflow-hidden">
             <style>
                 {`
+                .swiper-3d-gallery {
+                    width: 100%;
+                    padding-top: 50px;
+                    padding-bottom: 50px;
+                }
                 .swiper-3d-gallery .swiper-slide {
                     background-position: center;
                     background-size: cover;
                     width: 300px;
                     height: 400px;
+                    /* Responsive */
+                    max-width: 80%;
+                    max-height: 80%;
                 }
                 .swiper-3d-gallery .swiper-slide img {
                     display: block;
@@ -62,11 +70,6 @@ export const ThreeDGalleryBlock = ({
                 pagination={true}
                 modules={[EffectCoverflow, Pagination]}
                 className="swiper-3d-gallery"
-                style={{
-                    width: '100%',
-                    paddingTop: '20px',
-                    paddingBottom: '50px',
-                }}
             >
                 {displayImages.map((img, index) => {
                     const src = typeof img === 'string' ? img : img.src;

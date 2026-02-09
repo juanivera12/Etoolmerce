@@ -14,30 +14,7 @@ export const Toolbar = ({ isPreviewMode, togglePreview, onPublish, onImport, onT
                 <span className="text-sm font-medium text-text-muted">Página: <span className="text-text">Inicio</span></span>
             </div>
 
-            {/* Device Selector */}
-            <div className="flex bg-surface p-1 rounded-lg border border-border absolute left-1/2 -translate-x-1/2">
-                <button
-                    onClick={() => setViewMode('desktop')}
-                    className={clsx("p-2 rounded-md transition-all", viewMode === 'desktop' ? "bg-surface-highlight shadow-sm text-primary" : "text-text-muted hover:text-text")}
-                    title="Escritorio"
-                >
-                    <Monitor size={18} />
-                </button>
-                <button
-                    onClick={() => setViewMode('tablet')}
-                    className={clsx("p-2 rounded-md transition-all", viewMode === 'tablet' ? "bg-surface-highlight shadow-sm text-primary" : "text-text-muted hover:text-text")}
-                    title="Tablet"
-                >
-                    <Tablet size={18} />
-                </button>
-                <button
-                    onClick={() => setViewMode('mobile')}
-                    className={clsx("p-2 rounded-md transition-all", viewMode === 'mobile' ? "bg-surface-highlight shadow-sm text-primary" : "text-text-muted hover:text-text")}
-                    title="Móvil"
-                >
-                    <Smartphone size={18} />
-                </button>
-            </div>
+
 
             <div className="flex items-center gap-3">
 

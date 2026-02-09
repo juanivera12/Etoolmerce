@@ -6,45 +6,19 @@ import { supabase } from '../services/supabaseClient';
 
 // --- VISUAL COMPONENTS ---
 
-const AuroraBackground = React.memo(() => (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none bg-black">
-        <style>{`
-            @keyframes blob-float-1 {
-                0% { transform: translate(0, 0) scale(1); }
-                33% { transform: translate(30px, -50px) scale(1.1); }
-                66% { transform: translate(-20px, 20px) scale(0.9); }
-                100% { transform: translate(0, 0) scale(1); }
-            }
-            @keyframes blob-float-2 {
-                0% { transform: translate(0, 0) scale(1); }
-                33% { transform: translate(-30px, 50px) scale(1.1); }
-                66% { transform: translate(20px, -20px) scale(0.9); }
-                100% { transform: translate(0, 0) scale(1); }
-            }
-            .blob {
-                position: absolute;
-                border-radius: 9999px;
-                filter: blur(60px);
-                opacity: 0.6;
-                will-change: transform;
-                transform: translateZ(0); /* Hardware Accel */
-            }
-        `}</style>
-
-        {/* Deep Black Base */}
-        <div className="absolute inset-0 bg-black" />
-
-        {/* CSS Animated Blobs - No JS Overhead */}
-        <div className="blob bg-yellow-500/20 w-[50%] h-[50%] top-[-10%] left-[-10%]"
-            style={{ animation: 'blob-float-1 20s infinite alternate linear' }} />
-
-        <div className="blob bg-amber-600/20 w-[60%] h-[60%] bottom-[-10%] right-[-10%]"
-            style={{ animation: 'blob-float-2 25s infinite alternate-reverse linear' }} />
-
-        <div className="blob bg-yellow-300/10 w-[40%] h-[40%] top-[30%] left-[30%]"
-            style={{ animation: 'blob-float-1 22s infinite alternate linear' }} />
-
-        {/* Removed Noise Filter causing lag */}
+const LogoPatternBackground = React.memo(() => (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div
+            className="absolute inset-0 bg-black opacity-100"
+            style={{
+                backgroundImage: 'url("/pattern_logo.jpg")',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                filter: 'brightness(0.4)'
+            }}
+        />
+        {/* Vignette effect to focus on the card */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/60" />
     </div>
 ));
 
@@ -178,16 +152,13 @@ export const AuthPage = () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4 relative font-sans overflow-hidden bg-black">
-            <AuroraBackground />
+            <LogoPatternBackground />
 
             <div className="relative w-full max-w-[420px] z-10 perspective-1000">
-                {/* Floating Glass Card */}
-                <motion.div
-                    initial={{ opacity: 0, y: 30, rotateX: 10 }}
-                    animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
+                {/* Floating Glass Card - Static */}
+                <div
                     className="
-                        backdrop-blur-md bg-black/60 
+                        bg-[#121212] 
                         border border-white/10 
                         rounded-3xl p-8 
                         shadow-2xl
@@ -203,39 +174,27 @@ export const AuthPage = () => {
 
                     {/* Header */}
                     <div className="text-center mb-8 relative">
-                        <motion.h1
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 }}
-                            className="text-4xl font-black text-white mb-2 tracking-tight"
-                        >
-                            E-ToolMerce
-                        </motion.h1>
-                        <motion.p
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.3 }}
-                            className="text-zinc-400 font-medium"
-                        >
+                        <div className="flex justify-center mb-4">
+                            <img
+                                src="/logo.png"
+                                alt="E-ToolMerce"
+                                className="w-full h-auto object-contain max-h-24"
+                                style={{ mixBlendMode: 'screen' }}
+                            />
+                        </div>
+                        <p className="text-zinc-400 font-medium">
                             {isLogin ? 'Accede a tu espacio creativo' : 'Únete a la revolución visual'}
-                        </motion.p>
+                        </p>
                     </div>
 
                     {/* Error Message */}
-                    <AnimatePresence>
-                        {errorMsg && (
-                            <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                className="bg-red-500/10 border border-red-500/20 rounded-lg mb-6 overflow-hidden"
-                            >
-                                <div className="p-3 text-red-200 text-xs flex items-center gap-2">
-                                    <AlertCircle size={14} /> {errorMsg}
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                    {errorMsg && (
+                        <div className="bg-red-500/10 border border-red-500/20 rounded-lg mb-6 overflow-hidden">
+                            <div className="p-3 text-red-200 text-xs flex items-center gap-2">
+                                <AlertCircle size={14} /> {errorMsg}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Google Button */}
                     <button
@@ -256,93 +215,81 @@ export const AuthPage = () => {
 
                     {/* Forms */}
                     <div className="relative min-h-[280px]">
-                        <AnimatePresence mode="wait" initial={false}>
-                            {isLogin ? (
-                                <motion.form
-                                    key="login-form"
-                                    initial={{ x: -20, opacity: 0 }}
-                                    animate={{ x: 0, opacity: 1 }}
-                                    exit={{ x: 20, opacity: 0 }}
-                                    transition={{ duration: 0.2 }}
-                                    className="space-y-4 absolute inset-0"
-                                    onSubmit={handleEmailAuth}
-                                >
-                                    <InputField
-                                        icon={Mail}
-                                        type="email"
-                                        placeholder="Correo Electrónico"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                    />
-                                    <InputField
-                                        icon={Lock}
-                                        type="password"
-                                        placeholder="Contraseña"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                    />
-                                    <div className="flex justify-end">
-                                        <a href="#" className="text-xs text-yellow-500 hover:text-yellow-400 transition-colors font-medium">Recuperar contraseña</a>
-                                    </div>
+                        {isLogin ? (
+                            <form
+                                className="space-y-4"
+                                onSubmit={handleEmailAuth}
+                            >
+                                <InputField
+                                    icon={Mail}
+                                    type="email"
+                                    placeholder="Correo Electrónico"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                />
+                                <InputField
+                                    icon={Lock}
+                                    type="password"
+                                    placeholder="Contraseña"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+                                <div className="flex justify-end">
+                                    <a href="#" className="text-xs text-yellow-500 hover:text-yellow-400 transition-colors font-medium">Recuperar contraseña</a>
+                                </div>
 
-                                    <button
-                                        type="submit"
-                                        disabled={isLoading}
-                                        className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-bold py-4 rounded-xl shadow-[0_10px_20px_-5px_rgba(250,204,21,0.3)] flex items-center justify-center gap-2 mt-4 hover:shadow-[0_15px_30px_-5px_rgba(250,204,21,0.4)] hover:translate-y-[-1px] transition-all disabled:opacity-70 disabled:transform-none disabled:shadow-none"
-                                    >
-                                        {isLoading ? <Loader2 className="animate-spin" size={20} /> : (
-                                            <>
-                                                Acceder al Editor <ArrowRight size={20} />
-                                            </>
-                                        )}
-                                    </button>
-                                </motion.form>
-                            ) : (
-                                <motion.form
-                                    key="register-form"
-                                    initial={{ x: 20, opacity: 0 }}
-                                    animate={{ x: 0, opacity: 1 }}
-                                    exit={{ x: -20, opacity: 0 }}
-                                    transition={{ duration: 0.2 }}
-                                    className="space-y-4 absolute inset-0"
-                                    onSubmit={handleEmailAuth}
+                                <button
+                                    type="submit"
+                                    disabled={isLoading}
+                                    className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-bold py-4 rounded-xl shadow-[0_10px_20px_-5px_rgba(250,204,21,0.3)] flex items-center justify-center gap-2 mt-4 hover:shadow-[0_15px_30px_-5px_rgba(250,204,21,0.4)] hover:translate-y-[-1px] transition-all disabled:opacity-70 disabled:transform-none disabled:shadow-none"
                                 >
-                                    <InputField
-                                        icon={User}
-                                        type="text"
-                                        placeholder="Tu Nombre"
-                                        value={fullName}
-                                        onChange={(e) => setFullName(e.target.value)}
-                                    />
-                                    <InputField
-                                        icon={Mail}
-                                        type="email"
-                                        placeholder="Correo Electrónico"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                    />
-                                    <InputField
-                                        icon={Lock}
-                                        type="password"
-                                        placeholder="Crea una contraseña segura"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                    />
+                                    {isLoading ? <Loader2 className="animate-spin" size={20} /> : (
+                                        <>
+                                            Acceder al Editor <ArrowRight size={20} />
+                                        </>
+                                    )}
+                                </button>
+                            </form>
+                        ) : (
+                            <form
+                                className="space-y-4"
+                                onSubmit={handleEmailAuth}
+                            >
+                                <InputField
+                                    icon={User}
+                                    type="text"
+                                    placeholder="Tu Nombre"
+                                    value={fullName}
+                                    onChange={(e) => setFullName(e.target.value)}
+                                />
+                                <InputField
+                                    icon={Mail}
+                                    type="email"
+                                    placeholder="Correo Electrónico"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                />
+                                <InputField
+                                    icon={Lock}
+                                    type="password"
+                                    placeholder="Crea una contraseña segura"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
 
-                                    <button
-                                        type="submit"
-                                        disabled={isLoading}
-                                        className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-bold py-4 rounded-xl shadow-[0_10px_20px_-5px_rgba(250,204,21,0.3)] flex items-center justify-center gap-2 mt-4 hover:shadow-[0_15px_30px_-5px_rgba(250,204,21,0.4)] hover:translate-y-[-1px] transition-all disabled:opacity-70 disabled:transform-none disabled:shadow-none"
-                                    >
-                                        {isLoading ? <Loader2 className="animate-spin" size={20} /> : (
-                                            <>
-                                                Crear Cuenta Gratis <ArrowRight size={20} />
-                                            </>
-                                        )}
-                                    </button>
-                                </motion.form>
-                            )}
-                        </AnimatePresence>
+                                <button
+                                    type="submit"
+                                    disabled={isLoading}
+                                    className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 text-black font-bold py-4 rounded-xl shadow-[0_10px_20px_-5px_rgba(250,204,21,0.3)] flex items-center justify-center gap-2 mt-4 hover:shadow-[0_15px_30px_-5px_rgba(250,204,21,0.4)] hover:translate-y-[-1px] transition-all disabled:opacity-70 disabled:transform-none disabled:shadow-none"
+                                >
+                                    {isLoading ? <Loader2 className="animate-spin" size={20} /> : (
+                                        <>
+                                            Crear Cuenta Gratis <ArrowRight size={20} />
+                                        </>
+                                    )}
+                                </button>
+                            </form>
+                        )}
                     </div>
 
                     {/* Footer Toggle */}
@@ -357,7 +304,7 @@ export const AuthPage = () => {
                             </span>
                         </button>
                     </div>
-                </motion.div>
+                </div>
             </div>
 
             {/* Credits / Decorative */}

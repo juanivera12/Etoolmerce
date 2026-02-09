@@ -710,7 +710,7 @@ export const COMMUNITY_TEMPLATES = [
                         {
                             id: "saas-p",
                             type: "text",
-                            content: "Automatiza tu flujo de trabajo con nuestra IA avanzada.",
+                            content: "Automatiza tu flujo de trabajo con nuestra tecnología avanzada.",
                             styles: { fontSize: "20px", color: "#94a3b8", textAlign: "center", maxWidth: "600px" }
                         }
                     ]
