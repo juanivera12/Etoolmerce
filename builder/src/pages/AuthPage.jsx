@@ -3,20 +3,23 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, User, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabaseClient';
+import backgroundVideo from '../assets/templates/fondoback.mp4';
 
 // --- VISUAL COMPONENTS ---
 
 const LogoPatternBackground = React.memo(() => (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div
-            className="absolute inset-0 bg-black opacity-100"
-            style={{
-                backgroundImage: 'url("/pattern_logo.jpg")',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                filter: 'brightness(0.4)'
-            }}
-        />
+        <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ filter: 'brightness(0.4)' }}
+        >
+            <source src={backgroundVideo} type="video/mp4" />
+            Your browser does not support the video tag.
+        </video>
         {/* Vignette effect to focus on the card */}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/60" />
     </div>
