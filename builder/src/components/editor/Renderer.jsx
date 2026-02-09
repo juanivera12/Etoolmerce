@@ -3,6 +3,7 @@ import { useEditorStore } from '../../store/useEditorStore';
 import clsx from 'clsx';
 import { Resizer } from './Resizer';
 import * as LucideIcons from 'lucide-react';
+import { X, Lock, CreditCard } from 'lucide-react';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { ProductCard } from '../shop/ProductCard';
 import { CartWidget } from '../shop/CartWidget';
@@ -15,49 +16,100 @@ import { CarouselBlock } from '../blocks/CarouselBlock';
 // import 'aos/dist/aos.css';
 
 import { useRelativeMouse } from '../../hooks/useRelativeMouse';
+import { QuickLayerToolbar } from './QuickLayerToolbar';
+import { ThreeDGalleryBlock } from '../blocks/ThreeDGalleryBlock';
+import TypewriterText from '../ui/TypewriterText';
+
+// Simple Error Boundary Component
+// Enhanced Error Boundary
+class ErrorBoundary extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null, errorInfo: null };
+    }
+
+    static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+    }
+
+    componentDidCatch(error, errorInfo) {
+        console.error("Renderer Error:", error, errorInfo);
+        this.setState({ errorInfo });
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div style={{ padding: '20px', border: '1px solid red', color: 'red', backgroundColor: '#ffebeb', borderRadius: '8px', margin: '10px' }}>
+                    <h4 style={{ margin: '0 0 10px 0', fontSize: '14px' }}>Error al renderizar componente</h4>
+                    {this.props.nodeType && (
+                        <p style={{ margin: '0 0 10px 0', fontSize: '12px', fontWeight: 'bold' }}>Tipo: {this.props.nodeType}</p>
+                    )}
+                    <details style={{ whiteSpace: 'pre-wrap', fontSize: '11px', color: '#666' }}>
+                        <summary>Detalles técnicos</summary>
+                        {this.state.error && this.state.error.toString()}
+                        <br />
+                        {this.state.errorInfo?.componentStack}
+                    </details>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
 
 const ElementWrapper = ({ node, children }) => {
     const { selectedId, selectElement, addElement, moveElement, updateStyles, isPreviewMode, setActivePage } = useEditorStore();
     const { addToCart } = useCart();
     const nodeRef = useRef(null);
 
+    // Ensure node exists
+    if (!node) return null;
+
     // Initialize AOS removed - moved to App.jsx specific for Editor or Preview?
     // Actually, usually we Init once at root. 
 
     // Refresh AOS when node animation changes or preview mode toggles
+    // Safe Access to node properties to prevent crashes
+    const styles = node.styles || {};
+    const animation = node.animation || {};
+    const backgroundConfig = node.backgroundConfig || {};
+
+    // Refresh AOS when node animation changes or preview mode toggles
     React.useEffect(() => {
-        if (node.animation) {
+        if (animation.type) {
             // Debounce refresh to avoid lag?
             const timer = setTimeout(() => {
-                AOS.refresh();
+                // AOS is global, might not be needed if using Framer Motion exclusively
+                // AOS.refresh();
             }, 100);
             return () => clearTimeout(timer);
         }
-    }, [node.animation, isPreviewMode]);
+    }, [animation.type, isPreviewMode]);
 
     // --- Ambient & Interactive Backgrounds ---
-    const bgConfig = node.backgroundConfig || {};
+    // using safe backgroundConfig
 
     // 1. Interactive Spotlight Hook
     // Requires ref to the element (nodeRef)
-    useRelativeMouse(nodeRef, bgConfig.spotlightEnabled);
+    useRelativeMouse(nodeRef, backgroundConfig.spotlightEnabled);
 
     // 2. Ambient Classes
     const ambientClass = {
         'pulse': 'animate-radial-pulse',
         'aurora': 'animate-aurora',
         'noise': 'animate-noise'
-    }[bgConfig.ambientType];
+    }[backgroundConfig.ambientType];
 
-    const spotlightClass = bgConfig.spotlightEnabled ? 'bg-interactive-spotlight' : '';
+    const spotlightClass = backgroundConfig.spotlightEnabled ? 'bg-interactive-spotlight' : '';
     // ----------------------------------------
 
     // Hover Animation Props (Preview Only)
     const hoverProps = isPreviewMode ? {
         whileHover: {
-            scale: node.styles.hoverScale ? parseFloat(node.styles.hoverScale) : 1,
-            filter: node.styles.hoverBrightness ? `brightness(${node.styles.hoverBrightness})` : 'none',
-            zIndex: node.styles.hoverScale ? 100 : undefined
+            scale: styles.hoverScale ? parseFloat(styles.hoverScale) : 1,
+            filter: styles.hoverBrightness ? `brightness(${styles.hoverBrightness})` : 'none',
+            zIndex: styles.hoverScale ? 100 : undefined
         },
         transition: { duration: 0.2 }
     } : {};
@@ -82,24 +134,40 @@ const ElementWrapper = ({ node, children }) => {
             case 'bounce': return { visible: { y: [0, -20, 0], transition: { repeat: Infinity, duration: 1 } } };
             case 'shake': return { visible: { x: [0, -10, 10, -10, 10, 0], transition: { repeat: Infinity, duration: 1 } } };
             case 'heartBeat': return { visible: { scale: [1, 1.3, 1, 1.3, 1], transition: { repeat: Infinity, duration: 1.3 } } };
+            // Marquee Effects
+            case 'marquee-left': return {
+                visible: {
+                    x: ["0%", "-100%"],
+                    transition: { repeat: Infinity, ease: "linear", duration: 10, repeatType: "loop" }
+                }
+            };
+            case 'marquee-right': return {
+                visible: {
+                    x: ["-100%", "0%"],
+                    transition: { repeat: Infinity, ease: "linear", duration: 10, repeatType: "loop" }
+                }
+            };
             default: return { hidden: {}, visible: {} };
         }
     };
 
-    const animType = node.animation?.type;
+    const animType = animation.type;
     const variants = animType ? getAnimationVariants(animType) : {};
 
     // Animation Config
-    const animDuration = node.animation?.duration ? node.animation.duration / 1000 : 0.5;
-    const animDelay = node.animation?.delay ? node.animation.delay / 1000 : 0;
+    const animDuration = animation.duration ? animation.duration / 1000 : 0.5;
+    const animDelay = animation.delay ? animation.delay / 1000 : 0;
 
     // AOS Props replacement
+    // Check if variant has its own transition (like marquee) to avoid override
+    const hasOwnTransition = variants.visible && variants.visible.transition;
+
     const motionProps = animType ? {
         variants: variants,
         initial: "hidden",
         whileInView: "visible",
         viewport: { once: false, amount: 0.2 }, // Re-animate every time
-        transition: {
+        transition: hasOwnTransition ? undefined : {
             duration: animDuration,
             delay: animDelay,
             ease: "easeOut"
@@ -162,11 +230,16 @@ const ElementWrapper = ({ node, children }) => {
     };
 
     // Only specific types can accept drops (and only in edit mode)
-    const canAcceptDrop = !isPreviewMode && ['section', 'container', 'page', 'header', 'footer', 'hero', 'card', 'newsletter', 'accordion', 'tabs', 'checkout'].includes(node.type);
+    const canAcceptDrop = !isPreviewMode && ['section', 'container', 'page', 'header', 'footer', 'hero', 'card', 'newsletter', 'accordion', 'tabs', 'checkout', 'form'].includes(node.type);
 
     const handleDragOver = (e) => {
         e.preventDefault();
-        e.stopPropagation();
+
+        // Only stop propagation if THIS element can accept the drop.
+        // Otherwise, let it bubble up to a parent container (like Hero/Section).
+        if (canAcceptDrop) {
+            e.stopPropagation();
+        }
 
         if (canAcceptDrop) {
             const rect = e.currentTarget.getBoundingClientRect();
@@ -210,10 +283,6 @@ const ElementWrapper = ({ node, children }) => {
 
         // Smart Drop Logic: Apply Alignment
         if (canAcceptDrop && activeDropZone) {
-            let justify = 'flex-start';
-            if (activeDropZone === 'center') justify = 'center';
-            if (activeDropZone === 'right') justify = 'flex-end';
-
             // Apply Auto-Alignment to Container
             updateStyles(node.id, {
                 display: 'flex',
@@ -346,15 +415,15 @@ const ElementWrapper = ({ node, children }) => {
 
     // Force re-render key for test button
     // User requested: key={component.id + component.animation + Date.now()}
-    // We use JSON.stringify(node.animation) to detect ANY change in animation config
-    const renderKey = node.id + (node.animation ? JSON.stringify(node.animation) : '') + (isPreviewMode ? '-preview' : '-edit');
+    // We use JSON.stringify(animation) to detect ANY change in animation config
+    const renderKey = node.id + (animation ? JSON.stringify(animation) : '') + (isPreviewMode ? '-preview' : '-edit');
 
-    const hasAOS = !!node.animation?.type;
+    const hasAOS = !!animation.type;
 
     // CSS Variables for Ambient Control
     const ambientVars = {};
-    if (bgConfig.ambientOpacity) ambientVars['--ambient-opacity'] = bgConfig.ambientOpacity;
-    if (bgConfig.ambientDuration) ambientVars['--ambient-duration'] = `${bgConfig.ambientDuration}s`;
+    if (backgroundConfig.ambientOpacity) ambientVars['--ambient-opacity'] = backgroundConfig.ambientOpacity;
+    if (backgroundConfig.ambientDuration) ambientVars['--ambient-duration'] = `${backgroundConfig.ambientDuration}s`;
 
     return (
         <motion.div
@@ -392,7 +461,7 @@ const ElementWrapper = ({ node, children }) => {
                 activeDropZone === 'right' && "bg-slate-50/30"
             )}
             style={{
-                ...node.styles,
+                ...styles,
                 ...ambientVars,
                 boxShadow: dropPosition ? '0 0 0 2px #6366f1' : (isSelected ? undefined : 'none')
             }}
@@ -424,16 +493,22 @@ const ElementWrapper = ({ node, children }) => {
             )}
 
             {isSelected && (
-                <div className="absolute -top-6 left-0 bg-indigo-500 text-white text-xs px-2 py-1 rounded-t shadow-sm flex items-center gap-2 z-[100] whitespace-nowrap pointer-events-none">
-                    <span className="capitalize font-medium">{node.type}</span>
-                </div>
+                <>
+                    <div className="absolute -top-6 left-0 bg-indigo-500 text-white text-xs px-2 py-1 rounded-t shadow-sm flex items-center gap-2 z-[100] whitespace-nowrap pointer-events-none">
+                        <span className="capitalize font-medium">{node.type}</span>
+                    </div>
+                    {/* Z-Index Toolbar */}
+                    <QuickLayerToolbar selectedId={node.id} />
+                </>
             )}
         </motion.div>
     );
 
 };
 
-export const Renderer = ({ node }) => {
+
+
+const RendererInner = ({ node }) => {
     if (!node) return null;
 
     // We need to access store for the root page drop handler and preview mode
@@ -444,6 +519,28 @@ export const Renderer = ({ node }) => {
             <Renderer key={child.id} node={child} />
         ));
     };
+
+    if (node.type === 'card') {
+        const defaultStyles = {
+            width: '100%',
+            backgroundColor: '#ffffff',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            borderRadius: '0.75rem',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '20px',
+            ...node.styles
+        };
+
+        return (
+            <ElementWrapper node={{ ...node, styles: defaultStyles }}>
+                <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    {renderChildren()}
+                </div>
+            </ElementWrapper>
+        );
+    }
 
     if (node.type === 'page') {
         const handleDragOver = (e) => {
@@ -847,50 +944,143 @@ export const Renderer = ({ node }) => {
         );
     }
 
-    if (node.type === 'checkout') {
-        const { cartTotal, formatCurrency } = useCart();
-        const isDisabled = cartTotal === 0;
+    if (node.type === 'threeDGallery') {
+        const galleryData = node.data || {};
+        return (
+            <ElementWrapper node={node}>
+                <ThreeDGalleryBlock
+                    images={galleryData.images || []}
+                    rotate={galleryData.rotate}
+                    stretch={galleryData.stretch}
+                    depth={galleryData.depth}
+                    shadow={galleryData.shadow}
+                />
+            </ElementWrapper>
+        );
+    }
 
-        // Custom Render to inject Dynamic Data
-        // Reconstruct the children manually to keep styles but swap content
-        const titleNode = node.children?.[0];
-        const summaryNode = node.children?.[1];
-        const btnNode = node.children?.[2];
-        const secureNode = node.children?.[3];
+    if (node.type === 'typewriter') {
+        const twData = node.data || {};
+        // Map words if they come from Schema (array of objects)
+        const rawWords = twData.words || ["Escribe aquí", "Tus frases"];
+        const words = rawWords.map(w => (typeof w === 'object' && w.text) ? w.text : w);
 
         return (
             <ElementWrapper node={node}>
-                <div style={{ ...node.styles, height: 'auto', minHeight: 'auto' }}> {/* Ensure flexible container */}
-                    {/* Title */}
-                    <div style={{ ...titleNode?.styles, width: '100%', textAlign: 'center' }}>
-                        {titleNode?.content || node.children.find(c => c.id.includes('title'))?.content || 'Finalizar Compra'}
-                    </div>
-
-                    {/* Dynamic Summary */}
-                    <div style={{ ...summaryNode?.styles, width: '100%', textAlign: 'center' }}>
-                        Total a pagar: <span className="font-bold">{formatCurrency(cartTotal)}</span>
-                    </div>
-
-                    {/* Checkout Button */}
-                    <button
-                        disabled={isDisabled}
-                        style={{
-                            ...btnNode?.styles,
-                            opacity: isDisabled ? 0.5 : 1,
-                            cursor: isDisabled ? 'not-allowed' : 'pointer',
-                            pointerEvents: isDisabled ? 'none' : 'auto'
-                        }}
-                        className="transition-all active:scale-95"
-                    >
-                        {btnNode?.content || 'Pagar con Mercado Pago'}
-                    </button>
-
-                    {/* Secure Text */}
-                    <div style={{ ...secureNode?.styles, justifyContent: 'center', width: '100%' }}>
-                        {secureNode?.content || 'Pago procesado de forma segura'}
-                    </div>
-                </div>
+                <TypewriterText
+                    words={words}
+                    typingSpeed={twData.typingSpeed || 150}
+                    deletingSpeed={twData.deletingSpeed || 50}
+                    pauseTime={twData.pauseTime || 2000}
+                    loop={twData.loop !== false}
+                    cursorColor={node.styles.color || "currentColor"}
+                    className={node.className}
+                    style={node.styles}
+                />
             </ElementWrapper>
+        );
+    }
+
+    if (node.type === 'checkout') {
+        const { cartTotal, formatCurrency } = useCart();
+        const isDisabled = cartTotal === 0;
+        const [showModal, setShowModal] = useState(false);
+
+        // Define Modal here or import it. For speed, inline or sibling component.
+        // Let's use a cohesive design.
+
+        const handleCheckoutClick = (e) => {
+            e.stopPropagation();
+            if (isPreviewMode) {
+                if (!isDisabled) setShowModal(true);
+            } else {
+                // In Editor, maybe just select it? Handled by ElementWrapper.
+            }
+        };
+
+        return (
+            <>
+                <ElementWrapper node={node}>
+                    {/* Visual Widget for Editor/Page */}
+                    <div
+                        className="flex flex-col items-center justify-center gap-3 p-4 bg-white rounded-xl shadow-sm border border-slate-200 w-full"
+                        style={{ ...node.styles }}
+                    >
+                        <div className="text-center space-y-1">
+                            <h3 className="text-lg font-bold text-slate-800">Resumen del Pedido</h3>
+                            <p className="text-sm text-slate-500">Total a pagar</p>
+                            <p className="text-2xl font-bold text-slate-900">{formatCurrency(cartTotal)}</p>
+                        </div>
+
+                        <button
+                            onClick={handleCheckoutClick}
+                            disabled={isDisabled && isPreviewMode}
+                            className={clsx(
+                                "w-full py-3 px-4 rounded-lg font-bold text-white transition-all flex items-center justify-center gap-2",
+                                isDisabled ? "bg-slate-300 cursor-not-allowed" : "bg-[#009EE3] hover:bg-[#008ED0] shadow-md hover:shadow-lg active:scale-95"
+                            )}
+                        >
+                            <CreditCard size={18} />
+                            {isDisabled ? 'Carrito Vacío' : 'Pagar con Mercado Pago'}
+                        </button>
+
+                        <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                            <Lock size={10} /> Pagos procesados de forma segura
+                        </div>
+                    </div>
+                </ElementWrapper>
+
+                {/* Checkout Modal (Portal would be better but fixed fixed is okay for now) */}
+                {/* Only render if showModal is true */}
+                {showModal && (
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                            {/* Modal Header */}
+                            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                                <h3 className="font-bold text-gray-800">Finalizar Compra</h3>
+                                <button
+                                    onClick={() => setShowModal(false)}
+                                    className="p-1 rounded-full hover:bg-gray-200 text-gray-500 transition-colors"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            {/* Modal Content */}
+                            <div className="p-6 space-y-6">
+                                <div className="space-y-4">
+                                    {/* Order Items Mockup - in real app list items */}
+                                    <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 text-center">
+                                        <p className="text-sm text-blue-600 mb-1">Monto Total</p>
+                                        <p className="text-3xl font-bold text-blue-900">{formatCurrency(cartTotal)}</p>
+                                    </div>
+
+                                    <div className="text-sm text-gray-500 text-center">
+                                        Serás redirigido a Mercado Pago para completar tu pago de forma segura.
+                                    </div>
+                                </div>
+
+                                {/* Actual MP Action */}
+                                <button
+                                    className="w-full py-3.5 rounded-xl font-bold text-white bg-[#009EE3] hover:bg-[#008ED0] shadow-lg shadow-blue-500/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                                    onClick={() => {
+                                        // TODO: Trigger actual MP link logic
+                                        alert("Redirigiendo a Mercado Pago...");
+                                    }}
+                                >
+                                    Ir a Pagar
+                                </button>
+                            </div>
+
+                            <div className="p-3 bg-gray-50 text-center">
+                                <p className="text-[10px] text-gray-400 flex items-center justify-center gap-1">
+                                    <Lock size={10} /> Tus datos están protegidos por SSL
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </>
         );
     }
 
@@ -900,3 +1090,10 @@ export const Renderer = ({ node }) => {
         </ElementWrapper>
     );
 };
+
+// Export wrapped Renderer
+export const Renderer = (props) => (
+    <ErrorBoundary nodeType={props.node?.type}>
+        <RendererInner {...props} />
+    </ErrorBoundary>
+);

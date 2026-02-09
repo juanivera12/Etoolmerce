@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabaseClient';
 import { useEditorStore } from '../../store/useEditorStore';
-import { X, Upload, Loader2, CheckCircle, Image as ImageIcon } from 'lucide-react';
+import { X, Upload, Loader2, CheckCircle, Image as ImageIcon, Camera } from 'lucide-react';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
+import html2canvas from 'html2canvas';
 
 export const PublishTemplateModal = ({ onClose }) => {
-    // 1. Get current components from store
     // 1. Get current components from store
     const pages = useEditorStore((state) => state.pages);
     const activePageId = useEditorStore((state) => state.activePageId);
@@ -20,6 +20,7 @@ export const PublishTemplateModal = ({ onClose }) => {
     const [thumbnail, setThumbnail] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [capturing, setCapturing] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState('');
     const [user, setUser] = useState(null);
@@ -39,6 +40,44 @@ export const PublishTemplateModal = ({ onClose }) => {
         if (file) {
             setThumbnail(file);
             setPreviewUrl(URL.createObjectURL(file));
+        }
+    };
+
+    // Auto-Capture Preview
+    const handleCapturePreview = async () => {
+        const canvasElement = document.getElementById('canvas-area');
+        if (!canvasElement) {
+            setError("No se encontró el área de diseño.");
+            return;
+        }
+
+        setCapturing(true);
+        setError('');
+
+        try {
+            // Capture options
+            const canvas = await html2canvas(canvasElement, {
+                scale: 0.8, // Slightly lower quality for speed
+                useCORS: true,
+                logging: false,
+                allowTaint: true
+            });
+
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    const file = new File([blob], "auto-preview.png", { type: "image/png" });
+                    setThumbnail(file);
+                    setPreviewUrl(URL.createObjectURL(file));
+                } else {
+                    setError("Error al generar la imagen.");
+                }
+                setCapturing(false);
+            }, 'image/png', 0.8);
+
+        } catch (err) {
+            console.error("Capture Error:", err);
+            setError("Error al capturar la pantalla.");
+            setCapturing(false);
         }
     };
 
@@ -84,7 +123,8 @@ export const PublishTemplateModal = ({ onClose }) => {
                         thumbnail_url: publicUrl,
                         structure_json: components, // The actual editor content
                         author_id: user.id,
-                        author_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Unknown User'
+                        author_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Unknown User',
+                        author_pfp: user.user_metadata?.avatar_url || user.identities?.[0]?.identity_data?.avatar_url || null // Add Profile Picture
                     }
                 ]);
 
@@ -170,10 +210,19 @@ export const PublishTemplateModal = ({ onClose }) => {
                             />
                         </div>
 
-                        {/* Image Upload */}
+                        {/* Image Upload / Capture */}
                         <div>
-                            <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">
-                                Miniatura / Preview
+                            <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2 flex justify-between">
+                                <span>Miniatura / Preview</span>
+                                <button
+                                    type="button"
+                                    onClick={handleCapturePreview}
+                                    className="text-indigo-400 hover:text-indigo-300 flex items-center gap-1 text-[10px] uppercase font-bold tracking-wide"
+                                    disabled={capturing}
+                                >
+                                    {capturing ? <Loader2 size={10} className="animate-spin" /> : <Camera size={12} />}
+                                    {capturing ? "Capturando..." : "Auto-Captura"}
+                                </button>
                             </label>
                             <div className="relative group cursor-pointer">
                                 <input
@@ -189,7 +238,7 @@ export const PublishTemplateModal = ({ onClose }) => {
                                     {previewUrl ? (
                                         <>
                                             <img src={previewUrl} alt="Preview" className="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity" />
-                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                                                 <div className="bg-black/80 text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-2 border border-white/10">
                                                     <Upload size={14} /> Cambiar Imagen
                                                 </div>
@@ -197,10 +246,14 @@ export const PublishTemplateModal = ({ onClose }) => {
                                         </>
                                     ) : (
                                         <div className="text-center p-4 pointer-events-none">
-                                            <div className="w-12 h-12 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-3 text-zinc-500 group-hover:text-indigo-400 group-hover:bg-indigo-500/10 transition-colors">
-                                                <ImageIcon size={24} />
-                                            </div>
-                                            <p className="text-sm text-zinc-300 font-medium">Sube una imagen</p>
+                                            {capturing ? (
+                                                <Loader2 size={24} className="animate-spin text-indigo-500 mx-auto mb-3" />
+                                            ) : (
+                                                <div className="w-12 h-12 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-3 text-zinc-500 group-hover:text-indigo-400 group-hover:bg-indigo-500/10 transition-colors">
+                                                    <ImageIcon size={24} />
+                                                </div>
+                                            )}
+                                            <p className="text-sm text-zinc-300 font-medium">{capturing ? "Generando previsualización..." : "Sube o Captura una imagen"}</p>
                                             <p className="text-xs text-zinc-500 mt-1">PNG, JPG hasta 2MB</p>
                                         </div>
                                     )}

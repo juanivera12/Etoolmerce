@@ -44,11 +44,24 @@ export const BackgroundPanel = ({ selectedNode, updateStyles, updateProperty, se
         updateProperty(selectedId, 'backgroundConfig', newConfig);
 
         if (type === 'solid') {
-            updateStyles(selectedId, { backgroundImage: 'none', backgroundColor: selectedNode.styles.backgroundColor || '#ffffff' });
+            updateStyles(selectedId, {
+                backgroundImage: 'none',
+                backgroundColor: selectedNode.styles.backgroundColor || '#ffffff'
+            });
         } else if (type === 'gradient-linear') {
-            updateStyles(selectedId, { backgroundImage: `linear-gradient(${defaults.angle}deg, ${defaults.startColor}, ${defaults.endColor})` });
+            updateStyles(selectedId, {
+                backgroundImage: `linear-gradient(${defaults.angle}deg, ${defaults.startColor}, ${defaults.endColor})`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center',
+                backgroundSize: 'cover'
+            });
         } else if (type === 'gradient-radial') {
-            updateStyles(selectedId, { backgroundImage: `radial-gradient(circle at center, ${defaults.startColor}, ${defaults.endColor})` });
+            updateStyles(selectedId, {
+                backgroundImage: `radial-gradient(circle at center, ${defaults.startColor}, ${defaults.endColor})`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center',
+                backgroundSize: 'cover'
+            });
         }
     };
 
@@ -61,88 +74,24 @@ export const BackgroundPanel = ({ selectedNode, updateStyles, updateProperty, se
 
         if (newConfig.type === 'gradient-linear') {
             const deg = newConfig.angle || 135;
-            updateStyles(selectedId, { backgroundImage: `linear-gradient(${deg}deg, ${start}, ${end})` });
+            updateStyles(selectedId, {
+                backgroundImage: `linear-gradient(${deg}deg, ${start}, ${end})`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center',
+                backgroundSize: 'cover'
+            });
         } else if (newConfig.type === 'gradient-radial') {
-            updateStyles(selectedId, { backgroundImage: `radial-gradient(circle at center, ${start}, ${end})` });
-        }
-    };
-
-    const handleTextureChange = (textureType) => {
-        // defined classes
-        const textureMap = {
-            'none': [],
-            'cyber-grid': ['bg-cyber-grid'],
-            'racing-stripes': ['bg-racing-stripes'],
-            'particles': ['bg-particles']
-        };
-
-        const animateMap = {
-            'cyber-grid': 'bg-animate-grid',
-            'racing-stripes': 'bg-animate-stripes',
-            'particles': 'bg-animate-particles'
-        };
-
-        // Remove existing texture classes
-        let currentClasses = selectedNode.className || '';
-        const allTextureClasses = ['bg-cyber-grid', 'bg-racing-stripes', 'bg-particles', 'bg-animate-grid', 'bg-animate-stripes', 'bg-animate-particles'];
-
-        currentClasses = currentClasses.split(' ')
-            .filter(c => !allTextureClasses.includes(c))
-            .join(' ');
-
-        // Add new classes
-        let newClasses = currentClasses;
-        if (textureType !== 'none') {
-            newClasses += ' ' + textureMap[textureType].join(' ');
-            if (bgConfig.textureAnimated !== false) { // Default true
-                newClasses += ' ' + animateMap[textureType];
-            }
-        }
-
-        // Update Config
-        updateProperty(selectedId, 'backgroundConfig', { ...bgConfig, textureType });
-        // Update ClassName
-        updateProperty(selectedId, 'className', newClasses.trim());
-    };
-
-    const updateTextureSpeed = (speed) => {
-        updateProperty(selectedId, 'backgroundConfig', { ...bgConfig, textureSpeed: speed });
-        updateStyles(selectedId, { animationDuration: `${speed}s` });
-    };
-
-    const toggleTextureAnim = (enabled) => {
-        const textureType = bgConfig.textureType || 'none';
-        if (textureType === 'none') return;
-
-        updateProperty(selectedId, 'backgroundConfig', { ...bgConfig, textureAnimated: enabled });
-
-        const animateClass = {
-            'cyber-grid': 'bg-animate-grid',
-            'racing-stripes': 'bg-animate-stripes',
-            'particles': 'bg-animate-particles'
-        }[textureType];
-
-        let currentClasses = selectedNode.className || '';
-        if (enabled) {
-            if (!currentClasses.includes(animateClass)) {
-                updateProperty(selectedId, 'className', (currentClasses + ' ' + animateClass).trim());
-            }
-        } else {
-            updateProperty(selectedId, 'className', currentClasses.replace(animateClass, '').trim());
+            updateStyles(selectedId, {
+                backgroundImage: `radial-gradient(circle at center, ${start}, ${end})`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center',
+                backgroundSize: 'cover'
+            });
         }
     };
 
     // --- Ambient Animation Handlers ---
     const handleAmbientChange = (ambientType) => {
-        // We do NOT modify className here explicitly for ambientType, 
-        // because Renderer.jsx will apply it dynamically based on config.
-        // This keeps the "className" property clean from non-Tailwind utils if possible,
-        // (Though previously we put texture classes in className, mixing approaches is confusing.
-        // Let's stick to updating config and letting Renderer handle logic or updating className.
-        // For consistent Design System, let's put it in config and let Renderer apply it via utility classes)
-
-        // Actually, the previous implementation for textures modified className string.
-        // For Ambient, let's modify config. Renderer will check config and wrap/apply classes.
         updateProperty(selectedId, 'backgroundConfig', { ...bgConfig, ambientType });
     };
 
@@ -164,12 +113,6 @@ export const BackgroundPanel = ({ selectedNode, updateStyles, updateProperty, se
                         className={clsx("px-2 py-0.5 text-[10px] rounded transition-all", activeTab === 'color' ? "bg-white shadow text-primary font-medium" : "text-text-muted hover:text-text")}
                     >
                         Color
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('texture')}
-                        className={clsx("px-2 py-0.5 text-[10px] rounded transition-all", activeTab === 'texture' ? "bg-white shadow text-primary font-medium" : "text-text-muted hover:text-text")}
-                    >
-                        Texturas
                     </button>
                     <button
                         onClick={() => setActiveTab('ambient')}
@@ -277,76 +220,6 @@ export const BackgroundPanel = ({ selectedNode, updateStyles, updateProperty, se
                 </div>
             )}
 
-            {activeTab === 'texture' && (
-                <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-4">
-
-                    {/* Visual Grid Selector */}
-                    <div className="grid grid-cols-2 gap-2">
-                        <button
-                            onClick={() => handleTextureChange('none')}
-                            className={clsx("h-16 rounded border transition-all flex items-center justify-center bg-gray-50", (!bgConfig.textureType || bgConfig.textureType === 'none') ? "border-primary ring-1 ring-primary" : "border-border hover:border-primary/50")}
-                        >
-                            <span className="text-[10px] text-gray-500">Ninguna</span>
-                        </button>
-
-                        <button
-                            onClick={() => handleTextureChange('cyber-grid')}
-                            className={clsx("h-16 rounded border transition-all relative overflow-hidden bg-indigo-950 group", bgConfig.textureType === 'cyber-grid' ? "border-primary ring-1 ring-primary" : "border-border hover:border-primary/50")}
-                        >
-                            <div className="absolute inset-0 opacity-80 bg-cyber-grid bg-animate-grid" style={{ animationDuration: '3s' }}></div>
-                            <span className="relative z-10 text-[10px] text-white font-bold bg-black/60 px-2 py-0.5 rounded backdrop-blur-[2px]">Cyber Grid</span>
-                        </button>
-
-                        <button
-                            onClick={() => handleTextureChange('racing-stripes')}
-                            className={clsx("h-16 rounded border transition-all relative overflow-hidden bg-slate-800 group", bgConfig.textureType === 'racing-stripes' ? "border-primary ring-1 ring-primary" : "border-border hover:border-primary/50")}
-                        >
-                            <div className="absolute inset-0 opacity-80 bg-racing-stripes bg-animate-stripes"></div>
-                            <span className="relative z-10 text-[10px] text-white font-bold bg-black/60 px-2 py-0.5 rounded backdrop-blur-[2px]">Stripes</span>
-                        </button>
-
-                        <button
-                            onClick={() => handleTextureChange('particles')}
-                            className={clsx("h-16 rounded border transition-all relative overflow-hidden bg-violet-900 group", bgConfig.textureType === 'particles' ? "border-primary ring-1 ring-primary" : "border-border hover:border-primary/50")}
-                        >
-                            <div className="absolute inset-0 opacity-80 bg-particles bg-animate-particles"></div>
-                            <span className="relative z-10 text-[10px] text-white font-bold bg-black/60 px-2 py-0.5 rounded backdrop-blur-[2px]">Particles</span>
-                        </button>
-                    </div>
-
-                    {/* Controls */}
-                    {bgConfig.textureType && bgConfig.textureType !== 'none' && (
-                        <div className="p-3 bg-surface-highlight/30 rounded-lg border border-border/50 space-y-3">
-                            <div className="flex items-center justify-between">
-                                <InfoLabel label="Animar" tooltip="Activa el movimiento de la textura." />
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={bgConfig.textureAnimated !== false}
-                                        onChange={(e) => toggleTextureAnim(e.target.checked)}
-                                        className="sr-only peer"
-                                    />
-                                    <div className="w-9 h-5 bg-border rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
-                                </label>
-                            </div>
-
-                            <SliderControl
-                                label="Velocidad (Duración)"
-                                value={bgConfig.textureSpeed || 5}
-                                onChange={updateTextureSpeed}
-                                min={0.5}
-                                max={20}
-                                step={0.5}
-                                unit="s"
-                            />
-                            <p className="text-[9px] text-text-muted italic">
-                                * Se combina con el color de fondo elegido.
-                            </p>
-                        </div>
-                    )}
-                </div>
-            )}
-
             {activeTab === 'ambient' && (
                 <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-4">
                     {/* Visual Ambient Selector */}
@@ -355,7 +228,7 @@ export const BackgroundPanel = ({ selectedNode, updateStyles, updateProperty, se
                             onClick={() => handleAmbientChange('none')}
                             className={clsx("h-16 rounded border transition-all flex items-center justify-center bg-gray-50", (!bgConfig.ambientType || bgConfig.ambientType === 'none') ? "border-primary ring-1 ring-primary" : "border-border hover:border-primary/50")}
                         >
-                            <span className="text-[10px] text-gray-500">Estático</span>
+                            <span className="text-[10px] text-gray-500">Ninguna</span>
                         </button>
 
                         <button
@@ -363,23 +236,7 @@ export const BackgroundPanel = ({ selectedNode, updateStyles, updateProperty, se
                             className={clsx("h-16 rounded border transition-all relative overflow-hidden bg-slate-900 group", bgConfig.ambientType === 'pulse' ? "border-primary ring-1 ring-primary" : "border-border hover:border-primary/50")}
                         >
                             <div className="absolute inset-0 opacity-60 animate-radial-pulse" style={{ '--ambient-duration': '3s' }}></div>
-                            <span className="relative z-10 text-[10px] text-white font-bold bg-black/50 px-2 py-0.5 rounded backdrop-blur-[1px]">Pulso Radial</span>
-                        </button>
-
-                        <button
-                            onClick={() => handleAmbientChange('aurora')}
-                            className={clsx("h-16 rounded border transition-all relative overflow-hidden bg-gray-900 group", bgConfig.ambientType === 'aurora' ? "border-primary ring-1 ring-primary" : "border-border hover:border-primary/50")}
-                        >
-                            <div className="absolute inset-0 opacity-60 animate-aurora" style={{ '--ambient-duration': '5s' }}></div>
-                            <span className="relative z-10 text-[10px] text-white font-bold bg-black/50 px-2 py-0.5 rounded backdrop-blur-[1px]">Aurora</span>
-                        </button>
-
-                        <button
-                            onClick={() => handleAmbientChange('noise')}
-                            className={clsx("h-16 rounded border transition-all relative overflow-hidden bg-zinc-900 group", bgConfig.ambientType === 'noise' ? "border-primary ring-1 ring-primary" : "border-border hover:border-primary/50")}
-                        >
-                            <div className="absolute inset-0 opacity-60 animate-noise"></div>
-                            <span className="relative z-10 text-[10px] text-white font-bold bg-black/50 px-2 py-0.5 rounded backdrop-blur-[1px]">Ruido TV</span>
+                            <span className="relative z-10 text-[10px] text-white font-bold bg-black/50 px-2 py-0.5 rounded backdrop-blur-[1px]">Radial (Aurora)</span>
                         </button>
                     </div>
 
@@ -398,7 +255,7 @@ export const BackgroundPanel = ({ selectedNode, updateStyles, updateProperty, se
                             />
                             <SliderControl
                                 label="Velocidad (s)"
-                                value={bgConfig.ambientDuration || (bgConfig.ambientType === 'noise' ? 0.3 : 15)}
+                                value={bgConfig.ambientDuration || 15}
                                 onChange={(val) => updateProperty(selectedId, 'backgroundConfig', { ...bgConfig, ambientDuration: val })}
                                 min={0.1}
                                 max={60}

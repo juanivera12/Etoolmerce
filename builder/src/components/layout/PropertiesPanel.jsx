@@ -9,6 +9,8 @@ import { InfoLabel } from '../ui/InfoLabel';
 import { MercadoPagoSettings } from './MercadoPagoSettings';
 import { SchemaForm } from './SchemaRenderer';
 import { CarouselSchema } from '../../data/carouselSchema';
+import { ThreeDGallerySchema } from '../../data/threeDGallerySchema';
+import { TypewriterSchema } from '../../data/typewriterSchema';
 
 const SliderControl = ({ label, value, onChange, min = 0, max = 100, step = 1, helpTitle, helpDesc, unit = 'px' }) => {
     // Extract numeric value safely
@@ -63,7 +65,9 @@ export const PropertiesPanel = () => {
         return null;
     };
 
-    const selectedNode = selectedId ? findNode(pageData, selectedId) : null;
+    const selectedNodeRaw = selectedId ? findNode(pageData, selectedId) : null;
+    // Safeguard to prevent crashes if styles is undefined
+    const selectedNode = selectedNodeRaw ? { ...selectedNodeRaw, styles: selectedNodeRaw.styles || {} } : null;
 
     if (!selectedNode) {
         return (
@@ -301,6 +305,43 @@ export const PropertiesPanel = () => {
                             </div>
                         </div>
 
+                        {/* Transform (Rotation & Layout) */}
+                        <div className="space-y-3 pb-4 border-b border-border pt-4">
+                            <label className="text-xs font-semibold text-text flex items-center gap-2">
+                                <Monitor size={14} /> Transformación
+                            </label>
+
+                            {/* Rotation */}
+                            <SliderControl
+                                label="Rotación (°)"
+                                value={parseInt(selectedNode.styles.transform?.replace('rotate(', '').replace('deg)', '') || 0)}
+                                onChange={(v) => updateStyles(selectedId, { transform: `rotate(${v}deg)` })}
+                                min={0}
+                                max={360}
+                                unit="°"
+                                helpDesc="Gira el elemento. Útil para textos diagonales o estilos creativos."
+                            />
+
+                            {/* Text Orientation (Only for text-like elements) */}
+                            {(selectedNode.type === 'text' || selectedNode.type === 'header' || selectedNode.type === 'label' || selectedNode.type === 'typewriter') && (
+                                <div className="flex items-center justify-between mt-2">
+                                    <InfoLabel label="Texto Vertical" tooltip="Cambia el flujo del texto a vertical (estilo japonés/editorial)." />
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            className="sr-only peer"
+                                            checked={selectedNode.styles.writingMode === 'vertical-rl'}
+                                            onChange={(e) => updateStyles(selectedId, {
+                                                writingMode: e.target.checked ? 'vertical-rl' : 'horizontal-tb',
+                                                textOrientation: e.target.checked ? 'mixed' : undefined
+                                            })}
+                                        />
+                                        <div className="w-9 h-5 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                                    </label>
+                                </div>
+                            )}
+                        </div>
+
                         {/* Universal Background Panel (Gradients & Solid) */}
                         {(selectedNode.type === 'section' || selectedNode.type === 'container' || selectedNode.type === 'background' || selectedNode.type === 'header' || selectedNode.type === 'footer' || selectedNode.type === 'hero' || selectedNode.type === 'card' || selectedNode.type === 'button' || selectedNode.type === 'product' || selectedNode.type === 'productGrid' || selectedNode.type === 'newsletter' || selectedNode.type === 'accordion' || selectedNode.type === 'tabs' || selectedNode.type === 'page') && (
                             <div className="pt-4 border-t border-border">
@@ -522,6 +563,43 @@ export const PropertiesPanel = () => {
                             <div className="pb-4 border-b border-border mb-4">
                                 <SchemaForm
                                     schema={CarouselSchema}
+                                    data={selectedNode.data || {}}
+                                    onUpdate={(key, value) => {
+                                        if (key.startsWith('data.')) {
+                                            const propName = key.split('.')[1];
+                                            updateProperty(selectedId, 'data', { ...(selectedNode.data || {}), [propName]: value });
+                                        }
+                                    }}
+                                />
+                            </div>
+                        )}
+
+                        {selectedNode.type === 'threeDGallery' && (
+                            <div className="pb-4 border-b border-border mb-4">
+                                <SchemaForm
+                                    schema={ThreeDGallerySchema}
+                                    data={selectedNode.data || {}}
+                                    onUpdate={(key, value) => {
+                                        // Handle nested keys like data.rotate
+                                        if (key.startsWith('data.')) {
+                                            const propName = key.split('.')[1];
+                                            updateProperty(selectedId, 'data', { ...(selectedNode.data || {}), [propName]: value });
+                                        }
+                                        // Handle top-level keys if any (unlikely for this schema)
+                                        else {
+                                            // default handling? SchemaForm might return full object or partial?
+                                            // Based on Carousel impl:
+                                            // Nothing else needed here as schema uses data.prefix
+                                        }
+                                    }}
+                                />
+                            </div>
+                        )}
+
+                        {selectedNode.type === 'typewriter' && (
+                            <div className="pb-4 border-b border-border mb-4">
+                                <SchemaForm
+                                    schema={TypewriterSchema}
                                     data={selectedNode.data || {}}
                                     onUpdate={(key, value) => {
                                         if (key.startsWith('data.')) {
