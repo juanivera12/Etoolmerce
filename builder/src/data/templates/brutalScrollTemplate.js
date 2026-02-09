@@ -33,7 +33,7 @@ export const BrutalScrollTemplate = {
                     {
                         id: "hero_title_1",
                         type: "text",
-                        content: "BRUTAL",
+                        content: "DISEÑO",
                         styles: {
                             fontSize: "12rem",
                             fontWeight: "900",
@@ -48,7 +48,7 @@ export const BrutalScrollTemplate = {
                     {
                         id: "hero_title_2",
                         type: "text",
-                        content: "DESIGN",
+                        content: "BRUTAL",
                         styles: {
                             fontSize: "12rem",
                             fontWeight: "900",
@@ -64,7 +64,7 @@ export const BrutalScrollTemplate = {
                     {
                         id: "hero_subtitle",
                         type: "text",
-                        content: "SCROLL TO EXPLORE",
+                        content: "DESPLAZA PARA EXPLORAR",
                         styles: {
                             color: "#b0ff00",
                             marginTop: "2rem",
@@ -83,21 +83,23 @@ export const BrutalScrollTemplate = {
                     backgroundColor: "#b0ff00",
                     padding: "20px 0",
                     overflow: "hidden",
-                    whiteSpace: "nowrap"
+                    whiteSpace: "nowrap",
+                    display: "flex" // Ensure flex for marquee alignment if needed
                 },
                 children: [
                     {
                         id: "marquee_text",
                         type: "text",
-                        content: "SCROLL ANIMATION • INTERACTIVE • 3D GALLERY • PARALLAX EFFECT • SCROLL ANIMATION • INTERACTIVE •",
+                        content: "ANIMACIÓN SCROLL • INTERACTIVO • GALERÍA 3D • EFECTO PARALLAX • ANIMACIÓN SCROLL • INTERACTIVO • GALERÍA 3D • EFECTO PARALLAX • ANIMACIÓN SCROLL • INTERACTIVO • GALERÍA 3D • EFECTO PARALLAX •",
                         styles: {
                             color: "#000",
                             fontSize: "1.5rem",
                             fontWeight: "bold",
-                            fontFamily: "monospace"
+                            fontFamily: "monospace",
+                            display: "inline-block" // Required for transform
                         },
                         // We could add a continuous scroll animation if we had a marquee block, for now static or simple animation
-                        animation: { type: "marquee-left", duration: 15000 }
+                        animation: { type: "marquee-left", duration: 20000 }
                     }
                 ]
             },
@@ -116,7 +118,7 @@ export const BrutalScrollTemplate = {
                     {
                         id: "gallery_title",
                         type: "text",
-                        content: "3D SHOWCASE",
+                        content: "GALERÍA 3D",
                         styles: {
                             color: "#fff",
                             fontSize: "3rem",
@@ -173,7 +175,7 @@ export const BrutalScrollTemplate = {
                     {
                         id: "grid_text_1",
                         type: "text",
-                        content: "MINIMALIST AESTHETIC\n\nLess is more. Focusing on raw content and bold typography.",
+                        content: "ESTÉTICA MINIMALISTA\n\nMenos es más. Centrándose en el contenido puro y la tipografía audaz.",
                         styles: {
                             color: "#fff",
                             display: "flex",
@@ -187,7 +189,7 @@ export const BrutalScrollTemplate = {
                     {
                         id: "grid_text_2",
                         type: "text",
-                        content: "HIGH CONTRAST\n\nUsing extreme colors to create visual hierarchy and impact.",
+                        content: "ALTO CONTRASTE\n\nUsando colores extremos para crear jerarquía visual e impacto.",
                         styles: {
                             color: "#fff",
                             display: "flex",
@@ -226,7 +228,7 @@ export const BrutalScrollTemplate = {
                     {
                         id: "manifesto_title",
                         type: "text",
-                        content: "WE BREAK RULES",
+                        content: "ROMPE LAS REGLAS",
                         styles: {
                             color: "#b0ff00",
                             fontSize: "2rem",
@@ -237,7 +239,7 @@ export const BrutalScrollTemplate = {
                     {
                         id: "manifesto_text",
                         type: "text",
-                        content: "Digital experiences should be memorable. We reject the boring. We embrace the bold. Join the revolution of brutalist design.",
+                        content: "Las experiencias digitales deben ser memorables. Rechazamos lo aburrido. Abrazamos lo audaz. Únete a la revolución del diseño brutalista.",
                         styles: {
                             color: "#fff",
                             fontSize: "3rem",
@@ -282,7 +284,7 @@ export const BrutalScrollTemplate = {
                     {
                         id: "cta_btn",
                         type: "button",
-                        content: "START CREATING",
+                        content: "EMPEZAR A CREAR",
                         styles: {
                             backgroundColor: "#000",
                             color: "#fff",
