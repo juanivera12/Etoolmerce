@@ -6,9 +6,10 @@ export const MercadoPagoSettings = ({ selectedNode, updateProperty, selectedId }
     const [showGuide, setShowGuide] = useState(false);
 
     // Default values if not present
+    // Fallback to environment variables if node properties are empty
     const mpConfig = selectedNode.mercadoPago || {
-        publicKey: '',
-        accessToken: ''
+        publicKey: import.meta.env.VITE_MP_PUBLIC_KEY || '',
+        accessToken: import.meta.env.VITE_MP_ACCESS_TOKEN || ''
     };
 
     const handleChange = (key, value) => {
