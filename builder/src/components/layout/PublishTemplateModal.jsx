@@ -108,6 +108,11 @@ export const PublishTemplateModal = ({ onClose }) => {
 
             if (uploadError) throw uploadError;
 
+            // Get Public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('template-previews')
+                .getPublicUrl(fileName);
+
             // Fetch fresh user data just before inserting to be safe
             const { data: { user: currentUser } } = await supabase.auth.getUser();
             if (!currentUser) throw new Error("Sesión expirada. Por favor, inicia sesión de nuevo.");
